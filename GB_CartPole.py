@@ -167,7 +167,7 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
 # In[9]:
 
 
-backup_file_name = "GB_CartPole_" + time.strftime("%y%m%d") + "_5"
+backup_file_name = "GB_CartPole_" + time.strftime("%y%m%d") + "_4"
 backup_file = backup_file_name + ".p"
 backup_check = os.path.isfile(backup_file)
 
@@ -187,7 +187,7 @@ else:
     n_episode = 3000
     replay_size = 32
 
-    params = {"n_estimators":100, "learning_rate": 0.01, "boosting_type":"goss", "n_jobs":-1, "importance_type":"gain", "reg_alpha":0, "subsample":1}
+    params = {"n_estimators":100, "learning_rate": 0.01, "boosting_type":"goss", "n_jobs":-1, "importance_type":"split", "reg_alpha":0, "subsample":1}
 
     dqn = GB_DQN(n_state, n_action, params) 
 
