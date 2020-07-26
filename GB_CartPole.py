@@ -167,7 +167,7 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
 # In[9]:
 
 
-backup_file_name = "GB_CartPole_" + time.strftime("%y%m%d") + "_4"
+backup_file_name = "GB_CartPole_" + time.strftime("%y%m%d") + "_3"
 backup_file = backup_file_name + ".p"
 backup_check = os.path.isfile(backup_file)
 
@@ -182,10 +182,11 @@ else:
     env = gym.envs.make("CartPole-v1")
     n_state = env.observation_space.shape[0]
     n_action = env.action_space.n
-
-    memory = deque(maxlen=50)
-    n_episode = 3000
-    replay_size = 32
+    
+    deque_len = 50
+    memory = deque(maxlen=deque_len)
+    n_episode = 6000
+    replay_size = deque_len
 
     params = {"n_estimators":100, "learning_rate": 0.01, "boosting_type":"goss", "n_jobs":-1, "importance_type":"split", "reg_alpha":0, "subsample":1}
 
@@ -195,7 +196,7 @@ else:
 
     start = time.time()
     
-    q_learning(env, dqn, n_episode, replay_size, gamma=0.99, epsilon=0.1, epsilon_decay=1.0) # runs the alg
+    q_learning(env, dqn, n_episode, replay_size, gamma=0.99, epsilon=0.1, epsilon_decay=0.99) # runs the alg
     
     end = time.time()
     duration = int(end - start)
@@ -204,6 +205,8 @@ else:
     myEnv["t_r_e"] = total_reward_episode
     myEnv["duration"] = duration
     myEnv["GB_params"] = params
+    myEnv["replay_size"] = replay_size
+    myEnv["deque_len"] = deque_len
 
     with open(backup_file, "wb") as file:
         pickle.dump(myEnv, file)
