@@ -80,21 +80,21 @@ class Tree:
         """
         Returns the in-order sequence of tree. Needs to be implemented...
         """
-        print "return in-order sequence of tree. needs to be implemented" # FIXME
+        print("return in-order sequence of tree. needs to be implemented") # FIXME
         pass
 
     def preOrder(self):
         """
         Returns the pre-order sequence of tree. Needs to be implemented...
         """
-        print "return pre-order sequence of tree. needs to be implemented" # FIXME
+        print("return pre-order sequence of tree. needs to be implemented") # FIXME
         pass
 
     def draw(self):
         """
         Draw the tree in a pretty way in the console. Good for smaller trees. You probably don't want to draw a very large tree...
         """
-        print self.treeString()
+        print(self.treeString())
 
     def treeString(self,fun=False):
         """
@@ -114,7 +114,7 @@ class Tree:
             maxRow = max( map(len, [l,r]) )
             tmp = map(lambda x: x + [""]*(maxRow-len(x)), [l,r])
             newL,newR = map(elongate,tmp)
-            return [newL[i] + newR[i] for i in xrange(maxRow)]
+            return [newL[i] + newR[i] for i in range(maxRow)]
 
         ps = self.elem.toString() if fun else str(self.elem)
         ls,rs = map(lambda x: [x.elem.toString() if fun else str(x.elem)] if x.isLeaf() else x.__pretty(spacing,fun), (self.left,self.right))

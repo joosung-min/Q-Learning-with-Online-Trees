@@ -36,10 +36,10 @@ class ORT:
         self.minSamples = param['minSamples']
         self.minGain = param['minGain']
         self.xrng = param['xrng']
-        self.gamma = param['gamma'] if param.has_key('gamma') else 0
-        self.numTests = param['numTests'] if param.has_key('numTests') else 10
-        self.numClasses = param['numClasses'] if param.has_key('numClasses') else 0
-        self.maxDepth = param['maxDepth'] if param.has_key("maxDepth") else 30 # This needs to be implemented to restrain the maxDepth of the tree. FIXME
+        self.gamma = param['gamma'] if 'gamma' in param.keys() else 0
+        self.numTests = param['numTests'] if 'numTests' in param.keys() else 10
+        self.numClasses = param['numClasses'] if 'numClasses' in param.keys() else 0
+        self.maxDepth = param['maxDepth'] if 'maxDepth' in param.keys() else 30 # This needs to be implemented to restrain the maxDepth of the tree. FIXME
         self.tree = Tree( Elem(param=param) )
 
     def draw(self):
@@ -48,7 +48,7 @@ class ORT:
 
         ort.draw()
         """
-        print self.tree.treeString(fun=True)
+        print(self.tree.treeString(fun=True))
 
     def update(self,x,y):
         """
@@ -65,7 +65,7 @@ class ORT:
         if k == 0:
             self.__updateOOBE(x,y)
         else:
-            for u in xrange(k):
+            for _ in range(k):
                 self.__age += 1
                 (j,depth) = self.__findLeaf(x,self.tree)
                 j.elem.update(x,y)
@@ -188,13 +188,13 @@ class Elem: #HERE
     def __init__(self,param,splitDim=-1,splitLoc=0,numSamplesSeen=0):
         self.xrng = param['xrng']
         self.xdim = len(param['xrng'])
-        self.numClasses = param['numClasses'] if param.has_key('numClasses') else 0
-        self.numTests = param['numTests'] if param.has_key('numTests') else 10
+        self.numClasses = param['numClasses'] if 'numClasses' in param.keys() else 0
+        self.numTests = param['numTests'] if 'numTests' in param.keys() else 10
         self.splitDim = splitDim
         self.splitLoc = splitLoc
         self.numSamplesSeen = numSamplesSeen
         self.stats = SuffStats(self.numClasses)
-        self.tests = [ self.generateTest() for i in range(self.numTests) ]
+        self.tests = [ self.generateTest() for _ in range(self.numTests) ]
 
     def reset(self):
         self.stats = None #self.stats.reset()

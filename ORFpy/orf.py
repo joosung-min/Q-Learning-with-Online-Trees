@@ -2,6 +2,12 @@ from ort import ORT
 from math import sqrt
 from utils import argmax
 
+"""
+2020-08-16: Made the code Python3 competible:
+Replaced '.has_key' with '_ in .keys()'
+Replaced 'xrange' with 'range'
+"""
+
 class ORF:
     def __init__(self,param,numTrees=100,ncores=0):
         """
@@ -19,9 +25,9 @@ class ORF:
         orf = ORF(param,numTrees=20)
         """
         self.param = param
-        self.classify = param.has_key('numClasses') > 0
+        self.classify = 'numClasses' in param.keys() > 0
         self.numTrees = numTrees
-        self.forest = [ORT(param) for i in xrange(numTrees)]
+        self.forest = [ORT(param) for _ in range(numTrees)]
         self.ncores = ncores
 
     def update(self,x,y):
@@ -127,10 +133,10 @@ class ORF:
         conf = orf.confusion(xs,ys)
         orf.printConfusion(conf)
         """
-        print    "y\pred\t " + "\t".join(map(str,range(self.param['numClasses'])))
+        print("y/pred" + "\t" + "\t".join(map(str,range(self.param['numClasses']))))
         i = 0
         for row in conf:
-            print str(i) + "\t" + "\t".join(map(str,row))
+            print(str(i) + "\t" + "\t".join(map(str,row)))
             i += 1
 
 # Other functions:
