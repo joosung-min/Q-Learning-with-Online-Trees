@@ -290,11 +290,9 @@ class ORT: # Tree object
         """
         Needs to be implemented
         """
-        self.error = (y - self.predict(x))**2
-        self.error_sum += (y - self.predict(x))**2
-        # self.error_n += 1
-        # OOBE = np.sqrt(self.error_sum)/self.error_n
-        OOBE = np.sqrt(self.error) / np.sqrt(self.error_sum)
+        
+        self.error = np.abs(y - self.predict(x))        
+        OOBE = self.error/y
         return OOBE
 
 class SuffStats:
@@ -431,7 +429,7 @@ class ORF:
         self.forest = [ORT(param) for _ in range(numTrees)]
         self.ncores = ncores
         self.gamma = 0.05
-        self.Xs = deque(maxlen=10)
+        self.Xs = deque(maxlen=2)
 
     def update(self,x,y):
         """
