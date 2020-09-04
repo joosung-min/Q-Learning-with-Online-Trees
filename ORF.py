@@ -290,9 +290,11 @@ class ORT: # Tree object
         """
         Needs to be implemented
         """
+        self.error = (y - self.predict(x))**2
         self.error_sum += (y - self.predict(x))**2
-        self.error_n += 1
-        OOBE = np.sqrt(self.error_sum)/self.error_n
+        # self.error_n += 1
+        # OOBE = np.sqrt(self.error_sum)/self.error_n
+        OOBE = np.sqrt(self.error) / np.sqrt(self.error_sum)
         return OOBE
 
 class SuffStats:
