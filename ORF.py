@@ -268,7 +268,7 @@ class ORT: # Tree object
             lossR = 0 if nR==0 else statsR.impurity()
             g = elem.stats.impurity() - (nL/n) * lossL - (nR/n)  * lossR
             return 0 if g < 0 else g
-        return map(gain, tests)
+        return list(map(gain, tests))
 
     def __findLeaf(self, x, tree, depth=0):
         if tree.isLeaf(): 
@@ -456,13 +456,17 @@ class ORF:
             if len(idx) > k:
                 randomIdx = random.choices(idx, k=k) # choose a random tree among those older than 1/gamma
                 OOBErrors = [tree.OOBError for tree in self.forest]
-
-                r = np.random.uniform(0, 1)
+                goodTree = np.argmin(OOBErrors) # find a tree with
+                
                 for ridx in randomIdx:
+                    r = np.random.uniform(0, 1)
                     if OOBErrors[ridx] > r: # if a randomly chosen tree's OOBE is larger than some random r
-                        self.param['xrng'] = dataRange(self.Xs)
-                        self.forest[ridx] = ORT(self.param) # discart the tree and construct a new tree
-                        self.forest[ridx].update(x, y)
+                        # self.param['xrng'] = dataRange(self.Xs)
+                        # self.param['xrng'] = [[-4.8, 4.8], [-3, 3], [-0.418, 0.418], [-3, 3]] # for CartPole-v1
+                        # self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree
+                        # self.forest[ridx].update(x, y)
+                        self.forest[ridx] = self.forest[goodTree] # copy the good tree
+                        
                 
 
     def predict(self,x):
@@ -570,3 +574,5 @@ def sd(xs):
     n = len(xs) *1.0
     mu = np.sum(xs) / n
     return np.sqrt( sum(list(map(lambda x: (x-mu)*(x-mu),xs))) / (n-1) )
+
+# %%
