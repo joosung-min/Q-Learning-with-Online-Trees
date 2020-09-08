@@ -50,7 +50,7 @@
 # 
 # 
 
-# In[ ]:
+# In[1]:
 
 
 import gym
@@ -69,13 +69,13 @@ import time
 import datetime
 
 
-# In[ ]:
+# In[102]:
 
 
 import ORF
 
 
-# In[ ]:
+# In[104]:
 
 
 class ORF_DQN(): 
@@ -90,9 +90,11 @@ class ORF_DQN():
             self.a_state[a] = []
             self.a_target[a] = []
         self.isFit = False
-        self.rg = [] # for xrng
-        for _ in range(n_action):
-            self.rg.append([0, 255])
+        self.rg = [[-4.8, 4.8], [-2, 2], [-0.2, 0.2], [-3, 3]] # for CartPole
+        
+        # self.rg = []
+        # for _ in range(n_state):
+        #     self.rg.append([-5, 5])
 
     def predict(self, s):            
         # s: (4,) array (for cartpole)
@@ -106,18 +108,24 @@ class ORF_DQN():
         return preds
 
     def gen_epsilon_greedy_policy(self, epsilon, n_action):
+        
         def policy_function(state):
             # state: (4,) array
+            ran = "_"
             if np.random.random() < epsilon:
-                return random.randint(0, n_action - 1) # int
+                ran = "Random"
+                return([random.randint(0, n_action - 1), ran])
             else:
                 if self.isFit == True:
+                    ran = "Model"
                     q_values = self.predict(state) # (1,2) array
                     # print(q_values)
                 else: 
-                    return random.randint(0, n_action - 1) # int
+                    ran = "Random_notFit"
+                    return([random.randint(0, n_action - 1), ran])
                     # print("passed random.randint")
-            return np.argmax(q_values) # int
+            return([np.argmax(q_values), ran])# int
+        
         return policy_function
 
 
@@ -131,8 +139,8 @@ class ORF_DQN():
                 # self.a_target[action].append(0)
             
             for i in range(n_action):
-                self.a_params[i] = {'minSamples': 2, 'minGain': 0.1, 'xrng': ORF.dataRange(self.rg), 'maxDepth': 30}
-                self.a_model[i] = ORF.ORF(self.a_params[i], numTrees=30) # Fit initial RFs for each action            
+                self.a_params[i] = {'minSamples': 2, 'minGain': 0.2, 'xrng': ORF.dataRange(self.rg), 'maxDepth': 50}
+                self.a_model[i] = ORF.ORF(self.a_params[i], numTrees=100) # Fit initial RFs for each action            
             
             # for a in range(self.n_action):
             #     for j in range(len(self.a_state[a])):
@@ -162,7 +170,7 @@ class ORF_DQN():
             
 
 
-# In[ ]:
+# In[105]:
 
 
 def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, epsilon_decay=0.99):
@@ -171,18 +179,18 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
         policy = estimator.gen_epsilon_greedy_policy(epsilon, n_action)
         state = env.reset()
         is_done = False
-
+        i = 0
         while not is_done:
-            action = policy(state) # integer
-            
+            action, ran = policy(state) # integer
             next_state, reward, is_done, _ = env.step(action)
-            
+            i += 1
             # next_state: 4x1 array (for cartpole)
             # reward: integer
             # is_done: bool (True/False)
             
             total_reward_episode[episode] += reward
             # print(state, action, next_state, reward, is_done)
+            ep[episode].append((i, state, ran, action, is_done))
             memory.append((state, action, next_state, reward, is_done))
             
             if is_done:
@@ -192,16 +200,18 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
         epsilon = np.max([epsilon * epsilon_decay, 0.01])
 
 
-# In[ ]:
+# In[106]:
 
+
+backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_1"
 
 env = gym.envs.make("CartPole-v1")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
-memory = deque(maxlen=1000)
-n_episode = 600
-replay_size = 60
+memory = deque(maxlen=10000)
+n_episode = 3000
+replay_size = 64
 
 dqn = ORF_DQN(n_state, n_action) 
 
@@ -209,12 +219,14 @@ total_reward_episode = [0] * n_episode
 
 start = time.time()
 
-q_learning(env, dqn, n_episode, replay_size, gamma=1.0, epsilon=0.5, epsilon_decay=0.99) # runs the alg
+ep = {}
+for i in range(n_episode):
+    ep[i] = []
+
+q_learning(env, dqn, n_episode, replay_size, gamma=1.0, epsilon=0.8, epsilon_decay=0.99) # runs the alg
 
 end = time.time()
 duration = int(end - start)
-
-backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_1"
 
 img_file = backup_file_name + ".png"
 print("learning duration =", duration, " seconds")
@@ -228,7 +240,14 @@ plt.show()
 plt.savefig(img_file)
 
 
-# In[ ]:
+# In[108]:
+
+
+# minep = np.argmin(total_reward_episode)
+# ep[minep]
+
+
+# In[109]:
 
 
 # To back-up the work
@@ -238,6 +257,7 @@ backup_check = os.path.isfile(backup_file)
 myEnv = dict()
 myEnv["t_r_e"] = total_reward_episode
 myEnv["duration"] = duration
+myEnv["episode_details"] = ep
 # myEnv["ORF_params"] = params
 
 with open(backup_file, "wb") as file:
