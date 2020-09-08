@@ -452,20 +452,20 @@ class ORF:
             ages = [tree.age for tree in self.forest]
             idx = [i for i, v in enumerate(ages) if v > 1/self.gamma]
             
-            k = 1 # Supposed to be the number of trees to test. Increasing this seems to increase RMSE
+            k = int(len(self.forest)/6) # Supposed to be the number of trees to test. Increasing this seems to increase RMSE
             if len(idx) > k:
                 randomIdx = random.choices(idx, k=k) # choose a random tree among those older than 1/gamma
                 OOBErrors = [tree.OOBError for tree in self.forest]
-                goodTree = np.argmin(OOBErrors) # find a tree with
+                # goodTree = np.argmin(OOBErrors) # find a tree with
                 
                 for ridx in randomIdx:
                     r = np.random.uniform(0, 1)
                     if OOBErrors[ridx] > r: # if a randomly chosen tree's OOBE is larger than some random r
                         # self.param['xrng'] = dataRange(self.Xs)
                         # self.param['xrng'] = [[-4.8, 4.8], [-3, 3], [-0.418, 0.418], [-3, 3]] # for CartPole-v1
-                        # self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree
+                        self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree
                         # self.forest[ridx].update(x, y)
-                        self.forest[ridx] = self.forest[goodTree] # copy the good tree
+                        # self.forest[ridx] = self.forest[goodTree] # copy the good tree
                         
                 
 
