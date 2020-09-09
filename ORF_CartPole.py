@@ -50,7 +50,7 @@
 # 
 # 
 
-# In[1]:
+# In[4]:
 
 
 import gym
@@ -69,32 +69,30 @@ import time
 import datetime
 
 
-# In[102]:
+# In[113]:
 
 
 import ORF
 
 
-# In[104]:
+# In[145]:
 
 
 class ORF_DQN(): 
     
-    def __init__(self, n_state, n_action):
+    def __init__(self, n_state, n_action, replay_size):
         self.n_action = n_action
         self.a_model = {} # to build RF for each action
+        self.isFit = False
         self.a_state = {} # to contain state for each action
         self.a_target = {} # to contain q_value for each action
         self.a_params = {}
         for a in range(n_action): # To contain separate data for each action
             self.a_state[a] = []
-            self.a_target[a] = []
-        self.isFit = False
-        self.rg = [[-4.8, 4.8], [-2, 2], [-0.2, 0.2], [-3, 3]] # for CartPole
+            # self.a_target[a] = []
         
-        # self.rg = []
-        # for _ in range(n_state):
-        #     self.rg.append([-5, 5])
+        # self.rg = [[-255, 255]] * n_action
+        # self.rg = [[-4.8, 4.8], [-2, 2], [-0.2, 0.2], [-3, 3]] # for CartPole
 
     def predict(self, s):            
         # s: (4,) array (for cartpole)
@@ -103,7 +101,7 @@ class ORF_DQN():
         
         for a in range(self.n_action):
             preds.append(self.a_model[a].predicts([s])) # should be (, n_action)
-        
+        # print(preds)
         # print(np.argmax(preds))
         return preds
 
@@ -112,9 +110,10 @@ class ORF_DQN():
         def policy_function(state):
             # state: (4,) array
             ran = "_"
+            q_values =[0.0, 0.0]
             if np.random.random() < epsilon:
                 ran = "Random"
-                return([random.randint(0, n_action - 1), ran])
+                return([random.randint(0, n_action - 1), ran, q_values])
             else:
                 if self.isFit == True:
                     ran = "Model"
@@ -122,33 +121,25 @@ class ORF_DQN():
                     # print(q_values)
                 else: 
                     ran = "Random_notFit"
-                    return([random.randint(0, n_action - 1), ran])
+                    return([random.randint(0, n_action - 1), ran, q_values])
                     # print("passed random.randint")
-            return([np.argmax(q_values), ran])# int
+            return([np.argmax(q_values), ran, q_values])# int
         
         return policy_function
 
 
     def replay(self, memory, replay_size, gamma):
-        if len(memory) == replay_size: # Fit the initial RFs when memory size == replay_size
-            print(len(memory))
-            replay_data = random.sample(memory, replay_size)
+        if len(memory) == replay_size:
             
-            for state, action, next_state, reward, is_done in replay_data:
-                self.a_state[action].append(state) # create separate dataset for each action
-                # self.a_target[action].append(0)
+            for state, action, *_ in memory:
+                self.a_state[action].append(state)
             
             for i in range(n_action):
-                self.a_params[i] = {'minSamples': 2, 'minGain': 0.2, 'xrng': ORF.dataRange(self.rg), 'maxDepth': 50}
-                self.a_model[i] = ORF.ORF(self.a_params[i], numTrees=100) # Fit initial RFs for each action            
-            
-            # for a in range(self.n_action):
-            #     for j in range(len(self.a_state[a])):
-            #         self.a_model[a].update(self.a_state[a][j], self.a_target[a][j])
-
+                self.a_params[i] = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': ORF.dataRange(self.a_state[i]), 'maxDepth': 30}
+                self.a_model[i] = ORF.ORF(self.a_params[i], numTrees=30) # Fit initial RFs for each action            
             self.isFit = True
         
-        elif len(memory) > replay_size: # When the memory size exceeds the replay_size, start updating the RFs
+        if len(memory) >= replay_size: # When the memory size exceeds the replay_size, start updating the RFs
             replay_data = random.sample(memory, replay_size)
             # replay_data = memory[len(memory)-1] # draw the latest input
             # replay_data consists of [state, action, next_state, reward, is_done]
@@ -158,22 +149,38 @@ class ORF_DQN():
             # state, action, next_state, reward, is_done = replay_data
             
                 q_values = self.predict(state) # (, n_actions)
-                
+                # print(q_values)
                 if is_done == False:
                     q_values_next = self.predict(next_state) # (1,n_action) array
-                    q_values[action] = reward + gamma * np.max(q_values_next) # int
+                    
+                    q_values[action] = reward + gamma * np.max(q_values_next) # float
                 else:
-                    q_values[action] = -1 * reward
+                    q_values[action] = -1000 * reward
+                
+                # print(q_values)
+                
+                for i in range(len(q_values)):
+                    if type(q_values[i]) == list:
+                        q_values[i] = q_values[i][0]
+                
                 # Update both RFs
-            
+                
                 self.a_model[action].update(state, q_values[action])
+                # print(q_values)
+                # for j in range(self.n_action):
+                #     if j == action:
+                #         self.a_model[action].update(state, q_values[action])
+                #     else:
+                #         # print(q_values[j])
+                #         self.a_model[j].update(state, q_values[j])
+                
             
 
 
-# In[105]:
+# In[146]:
 
 
-def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, epsilon_decay=0.99):
+def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, epsilon_decay=0.95):
     
     for episode in tqdm(range(n_episode)):
         policy = estimator.gen_epsilon_greedy_policy(epsilon, n_action)
@@ -181,7 +188,7 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
         is_done = False
         i = 0
         while not is_done:
-            action, ran = policy(state) # integer
+            action, ran, pred = policy(state) # integer
             next_state, reward, is_done, _ = env.step(action)
             i += 1
             # next_state: 4x1 array (for cartpole)
@@ -189,8 +196,8 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
             # is_done: bool (True/False)
             
             total_reward_episode[episode] += reward
-            # print(state, action, next_state, reward, is_done)
-            ep[episode].append((i, state, ran, action, is_done))
+            
+            ep[episode].append((i, state, ran, action))
             memory.append((state, action, next_state, reward, is_done))
             
             if is_done:
@@ -198,22 +205,23 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
             estimator.replay(memory, replay_size, gamma)
             state = next_state
         epsilon = np.max([epsilon * epsilon_decay, 0.01])
+        # print(epsilon)
 
 
-# In[106]:
+# In[147]:
 
 
-backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_1"
+backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_3"
 
 env = gym.envs.make("CartPole-v1")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
 memory = deque(maxlen=10000)
-n_episode = 3000
-replay_size = 64
+n_episode = 600
+replay_size = 60
 
-dqn = ORF_DQN(n_state, n_action) 
+dqn = ORF_DQN(n_state, n_action, replay_size) 
 
 total_reward_episode = [0] * n_episode
 
@@ -223,7 +231,7 @@ ep = {}
 for i in range(n_episode):
     ep[i] = []
 
-q_learning(env, dqn, n_episode, replay_size, gamma=1.0, epsilon=0.8, epsilon_decay=0.99) # runs the alg
+q_learning(env, dqn, n_episode, replay_size, gamma=1.0, epsilon=0.5, epsilon_decay=0.99) # runs the alg
 
 end = time.time()
 duration = int(end - start)
@@ -240,14 +248,14 @@ plt.show()
 plt.savefig(img_file)
 
 
-# In[108]:
+# In[151]:
 
 
 # minep = np.argmin(total_reward_episode)
-# ep[minep]
+# ep[80]
 
 
-# In[109]:
+# In[148]:
 
 
 # To back-up the work
@@ -262,4 +270,10 @@ myEnv["episode_details"] = ep
 
 with open(backup_file, "wb") as file:
     pickle.dump(myEnv, file)
+
+
+# In[ ]:
+
+
+
 

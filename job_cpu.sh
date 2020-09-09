@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -t 1-00:00
+#SBATCH -t 3-00:00
 #SBATCH --account=rrg-lelliott
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=8G
