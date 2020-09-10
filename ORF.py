@@ -226,7 +226,8 @@ class ORT: # Tree object
 
         ort.update(x,y)
         """
-        k = self.__poisson(1) # draw a random poisson
+        # k = self.__poisson(1) # draw a random poisson
+        k = np.random.poisson(lam=1)
         if k == 0:
             self.OOBError = self.__updateOOBE(x,y)
         else:
@@ -429,41 +430,57 @@ class ORF:
         self.forest = [ORT(param) for _ in range(numTrees)]
         self.ncores = ncores
         self.gamma = 0.05
-        self.Xs = deque(maxlen=2) # maxlen=2 showed some promising results in ORF_CartPole (200907)
 
     def update(self,x,y):
         """
         updates the random forest by updating each tree in the forest. As mentioned above, this is currently not implemented. Please replace 'pass' (below) by the appropriate implementation.
         """
-        self.Xs.append(x) # dataset to construct new tree when one is discarded
-        # self.Ys.append(y) # dataset to construct new tree when one is discarded
 
         if self.ncores > 1:
             # parallel updates
             pass # FIXME
         else:
+            # # sequential updates
+            
+            # for tree in self.forest:
+            #     tree.update(x,y) # update each t in ORTs
+            
+            # # Temporal Knowledge Weighting
+            
+            # ages = [tree.age for tree in self.forest]
+            # idx = [i for i, v in enumerate(ages) if v > 1/self.gamma]
+            
+            # k = int(len(self.forest)/6) # k = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
+            # if len(idx) > k:
+            #     randomIdx = random.choices(idx, k=k) # choose a random tree among those older than 1/gamma
+            #     OOBErrors = [tree.OOBError for tree in self.forest]
+            #     # goodTree = np.argmin(OOBErrors) # find a tree with
+                
+            #     for ridx in randomIdx:
+            #         r = np.random.uniform(0, 1)
+            #         if OOBErrors[ridx] > r: # if a randomly chosen tree's OOBE is larger than some random r
+            #             self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree
+                        
             # sequential updates
+            idx = [] # idx of trees with age > 1/gamma
             
             for tree in self.forest:
                 tree.update(x,y) # update each t in ORTs
+                if tree.age > 1/self.gamma:
+                    idx.append(tree.age)
             
             # Temporal Knowledge Weighting
-            
-            ages = [tree.age for tree in self.forest]
-            idx = [i for i, v in enumerate(ages) if v > 1/self.gamma]
-            
-            k = int(len(self.forest)/6) # k = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
-            if len(idx) > k:
-                randomIdx = random.choices(idx, k=k) # choose a random tree among those older than 1/gamma
-                OOBErrors = [tree.OOBError for tree in self.forest]
-                # goodTree = np.argmin(OOBErrors) # find a tree with
+
+            d = int(len(self.forest)/6) # d = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
+            if len(idx) > d:
+                randomIdx = np.sort(np.random.choice(idx, size=d, replace=False)) # randomly choose trees older than 1/gamma
+                OOBErrors = [self.forest[i].OOBError for i in randomIdx]
                 
-                for ridx in randomIdx:
-                    r = np.random.uniform(0, 1)
-                    if OOBErrors[ridx] > r: # if a randomly chosen tree's OOBE is larger than some random r
-                        self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree
-                        
-                        
+                rr = np.random.uniform(0,1, size=len(OOBErrors)) # independently draw uniform
+                didx = [i for i, e, r in zip(randomIdx, OOBErrors, rr) if e > r]
+                
+                for i in didx:
+                    self.forest[i] = ORT(self.param) # discard the tree and construct a new tree                                    
                 
 
     def predict(self,x):
