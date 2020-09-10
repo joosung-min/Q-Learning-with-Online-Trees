@@ -11,12 +11,14 @@
 
 # %%
 import numpy as np
+import sys
 import random
 import math
 import unittest
 from tqdm import tqdm
 from collections import deque
-
+import os
+import multiprocessing
 
 # %%
 def dataRange(X):
@@ -227,6 +229,7 @@ class ORT: # Tree object
         ort.update(x,y)
         """
         # k = self.__poisson(1) # draw a random poisson
+        
         k = np.random.poisson(lam=1)
         if k == 0:
             self.OOBError = self.__updateOOBE(x,y)
@@ -428,15 +431,20 @@ class ORF:
         self.classify = 1 if 'numClasses' in param.keys() else 0
         self.numTrees = numTrees
         self.forest = [ORT(param) for _ in range(numTrees)]
-        self.ncores = ncores
+        self.ncores = os.cpu_count()
         self.gamma = 0.05
+
+    def treeUpdate(self, i):
+        self.forest[i].update(self.x, self.y)
 
     def update(self,x,y):
         """
         updates the random forest by updating each tree in the forest. As mentioned above, this is currently not implemented. Please replace 'pass' (below) by the appropriate implementation.
         """
-
-        if self.ncores > 1:
+        self.x = x
+        self.y = y
+        # pool = multiprocessing.Pool(processes=self.ncores)
+        if self.ncores == 0:
             # parallel updates
             pass # FIXME
         else:
@@ -462,12 +470,22 @@ class ORF:
             #             self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree
                         
             # sequential updates
-            idx = [] # idx of trees with age > 1/gamma
             
-            for tree in self.forest:
+            
+            # pool.map(self.treeUpdate, range(len(self.forest)))
+            # pool.close()
+            # pool.join()
+            idx = [] # idx of trees with age > 1/gamma
+            for i, tree in enumerate(self.forest):
                 tree.update(x,y) # update each t in ORTs
                 if tree.age > 1/self.gamma:
-                    idx.append(tree.age)
+                    idx.append(i)
+            
+            # # Multiprocessing
+            # for i in range(len(self.forest)):
+            #     # self.forest[i].update(x, y)
+            #     if self.forest[i].age > 1/self.gamma:
+            #         idx.append(i)
             
             # Temporal Knowledge Weighting
 
