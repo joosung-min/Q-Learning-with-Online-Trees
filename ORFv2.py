@@ -112,7 +112,7 @@ class Tree: # Node object
         return self.__md(1)
 
     def __md(self,s):
-        return s if self.isLeaf() else max(self.left.__md(s+1),self.right.__md(s+1))
+        return s if self.isLeaf() else np.max(self.left.__md(s+1),self.right.__md(s+1))
 
     def inOrder(self):
         """
@@ -226,7 +226,9 @@ class ORT: # Tree object
 
         ort.update(x,y)
         """
-        k = self.__poisson(1) # draw a random poisson
+        k = np.random.poisson(lam=1)
+        # k = self.__poisson(1) # draw a random poisson
+        
         if k == 0:
             self.OOBError = self.__updateOOBE(x,y)
         else:
@@ -280,11 +282,11 @@ class ORT: # Tree object
             else:
                 return self.__findLeaf(x,tree.right,depth+1)
 
-    def __poisson(self,lam=1): # fix lamda = 1
-      l = np.exp(-lam)
-      def loop(k,p):
-          return loop(k+1, p * random.random()) if (p > l) else k - 1
-      return loop(0,1)
+    # def __poisson(self,lam=1): # fix lamda = 1
+    #   l = np.exp(-lam)
+    #   def loop(k,p):
+    #       return loop(k+1, p * random.random()) if (p > l) else k - 1
+    #   return loop(0,1)
 
     def __updateOOBE(self,x,y):
         """
@@ -429,44 +431,39 @@ class ORF:
         self.forest = [ORT(param) for _ in range(numTrees)]
         self.ncores = ncores
         self.gamma = 0.05
-        self.Xs = deque(maxlen=2) # maxlen=2 showed some promising results in ORF_CartPole (200907)
+        self.ages = [] # list of tree ages
+        self.idx = []  # idx of trees with age > 1/gamma
 
-    def update(self,x,y):
+    def update(self,x,y, xrng):
         """
         updates the random forest by updating each tree in the forest. As mentioned above, this is currently not implemented. Please replace 'pass' (below) by the appropriate implementation.
         """
-        self.Xs.append(x) # dataset to construct new tree when one is discarded
-        # self.Ys.append(y) # dataset to construct new tree when one is discarded
-
+        
         if self.ncores > 1:
             # parallel updates
             pass # FIXME
         else:
             # sequential updates
             
-            for tree in self.forest:
+            for i, tree in enumerate(self.forest):
                 tree.update(x,y) # update each t in ORTs
+                if tree.age > 1/self.gamma:
+                    self.idx.append(i)
             
             # Temporal Knowledge Weighting
-            
-            ages = [tree.age for tree in self.forest]
-            idx = [i for i, v in enumerate(ages) if v > 1/self.gamma]
-            
-            k = int(len(self.forest)/6) # k = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
-            if len(idx) > k:
-                randomIdx = random.choices(idx, k=k) # choose a random tree among those older than 1/gamma
-                OOBErrors = [tree.OOBError for tree in self.forest]
-                # goodTree = np.argmin(OOBErrors) # find a tree with
-                
-                for ridx in randomIdx:
-                    r = np.random.uniform(0, 1)
-                    if OOBErrors[ridx] > r: # if a randomly chosen tree's OOBE is larger than some random r
-                        self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree
-                        
-                        
-                
 
-    def predict(self,x):
+            k = int(len(self.forest)/6) # k = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
+            if len(self.idx) > k:
+                randomIdx = np.sort(np.random.choice(self.idx, size=k, replace=False)) # choose random trees among those older than 1/gamma
+                OOBErrors = [self.forest[i].OOBError for i in randomIdx]
+                
+                r = np.random.uniform(0,1, size=len(OOBErrors)) # independently draw uniform
+                ridx = np.unique((OOBErrors > r) * np.arange(len(OOBErrors)))
+                self.param["xrng"] = xrng
+                for ridx in randomIdx:
+                    self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree            
+    
+    def predict(self,x): # when we have one input
         """
         returns prediction (a scalar) of ORF based on input (x) which is a list of input variables
 
@@ -484,7 +481,7 @@ class ORF:
         else:
             return np.sum(preds) / (len(preds)*1.0)
 
-    def predicts(self,X):
+    def predicts(self,X): # when we have multiple inputs
         """
         returns predictions (a list) of ORF based on inputs (X) which is a list of list input variables
 
@@ -516,22 +513,22 @@ class ORF:
 
         Same idea for next 5 methods (for mean and std. dev.)
         """
-        return mean(list(map(lambda ort: ort.tree.size(), self.forest)))
+        return np.mean(list(map(lambda ort: ort.tree.size(), self.forest)))
 
     def meanNumLeaves(self):
-        return mean(list(map(lambda ort: ort.tree.numLeaves(), self.forest)))
+        return np.mean(list(map(lambda ort: ort.tree.numLeaves(), self.forest)))
 
     def meanMaxDepth(self):
-        return mean(list(map(lambda ort: ort.tree.maxDepth(), self.forest)))
+        return np.mean(list(map(lambda ort: ort.tree.maxDepth(), self.forest)))
 
     def sdTreeSize(self):
-        return sd([ort.tree.size() for ort in self.forest])
+        return np.std([ort.tree.size() for ort in self.forest])
 
     def sdNumLEaves(self):
-        return sd([ort.tree.numLeaves() for ort in self.forest])
+        return np.std([ort.tree.numLeaves() for ort in self.forest])
 
     def sdMaxDepth(self):
-        return sd([ort.tree.maxDepth() for ort in self.forest])
+        return np.std([ort.tree.maxDepth() for ort in self.forest])
     
     def confusion(self,xs,ys):
         """
