@@ -21,6 +21,8 @@ import os
 import multiprocessing
 
 # %%
+ncores = 8
+pool = multiprocessing.Pool(processes=ncores)
 def dataRange(X):
     """
     Accepts a list of lists (X) and returns the "column" ranges. e.g.
@@ -443,7 +445,7 @@ class ORF:
         """
         self.x = x
         self.y = y
-        # pool = multiprocessing.Pool(processes=self.ncores)
+        
         if self.ncores == 0:
             # parallel updates
             pass # FIXME
@@ -471,17 +473,17 @@ class ORF:
                         
             # sequential updates
             
-            
-            # pool.map(self.treeUpdate, range(len(self.forest)))
-            # pool.close()
-            # pool.join()
             idx = [] # idx of trees with age > 1/gamma
             for i, tree in enumerate(self.forest):
                 tree.update(x,y) # update each t in ORTs
                 if tree.age > 1/self.gamma:
                     idx.append(i)
+
+            # Multiprocessing
+            # pool.map(self.treeUpdate, range(len(self.forest)))
+            # pool.close()
+            # pool.join()
             
-            # # Multiprocessing
             # for i in range(len(self.forest)):
             #     # self.forest[i].update(x, y)
             #     if self.forest[i].age > 1/self.gamma:
