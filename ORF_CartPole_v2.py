@@ -160,7 +160,7 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
             
             total_reward_episode[episode] += reward
             
-            # ep[episode].append((i, state, ran, action))
+            ep[episode].append((i, state, ran, action))
             memory.append((state, action, next_state, reward, is_done))
             
             if is_done:
