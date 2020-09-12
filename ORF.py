@@ -18,11 +18,13 @@ import unittest
 from tqdm import tqdm
 from collections import deque
 import os
-import multiprocessing
+# import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
 
 # %%
-ncores = 8
-pool = multiprocessing.Pool(processes=ncores)
+ncores = 4
+# pool = multiprocessing.Pool(processes=ncores)
+pool = ProcessPoolExecutor(max_workers=ncores)
 def dataRange(X):
     """
     Accepts a list of lists (X) and returns the "column" ranges. e.g.
@@ -208,8 +210,8 @@ class ORT: # Tree object
         self.maxDepth = param['maxDepth'] if 'maxDepth' in param.keys() else 30 # This needs to be implemented to restrain the maxDepth of the tree. FIXME
         self.tree = Tree( Elem(param=param) )
         self.OOBError = 0
-        self.error_sum = 0
-        self.error_n = 0
+        # self.error_sum = 0
+        # self.error_n = 0
 
     def draw(self):
         """
@@ -234,7 +236,7 @@ class ORT: # Tree object
         
         k = np.random.poisson(lam=1)
         if k == 0:
-            self.OOBError = self.__updateOOBE(x,y)
+            self.OOBError = np.abs(y-self.predict(x)) / y # for regression
         else:
             for _ in range(k):
                 self.age += 1
@@ -281,25 +283,12 @@ class ORT: # Tree object
             return (tree,depth)
         else:
             (dim,loc) = tree.elem.split()
-            if x[dim] < loc:
-                return self.__findLeaf(x,tree.left,depth+1)
-            else:
-                return self.__findLeaf(x,tree.right,depth+1)
-
-    def __poisson(self,lam=1): # fix lamda = 1
-      l = np.exp(-lam)
-      def loop(k,p):
-          return loop(k+1, p * random.random()) if (p > l) else k - 1
-      return loop(0,1)
-
-    def __updateOOBE(self,x,y):
-        """
-        Needs to be implemented
-        """
-        
-        self.error = np.abs(y - self.predict(x))        
-        OOBE = self.error/y
-        return OOBE
+            return self.__findLeaf(x, tree.left, depth+1) if x[dim] < loc else self.__findLeaf(x,tree.right,depth+1)
+            
+            # if x[dim] < loc:
+            #     return self.__findLeaf(x,tree.left,depth+1)
+            # else:
+            #     return self.__findLeaf(x,tree.right,depth+1)
 
 class SuffStats:
     def __init__(self,numClasses=0,sm=0.0,ss=0.0):
@@ -314,11 +303,19 @@ class SuffStats:
 
     def update(self,y):
         self.n += 1
-        if self.__classify:
-            self.counts[y] += 1
-        else:
+        
+        if self.__classify == False: # if regression
             self.sum += y
-            self.ss += y*y
+            self.ss += y**2
+        
+        else: # if classification
+            self.counts[y] += 1
+        
+        # if self.__classify:
+        #     self.counts[y] += 1
+        # else:
+        #     self.sum += y
+        #     self.ss += y**2
 
     def reset(self):
         self.n = None
@@ -331,18 +328,27 @@ class SuffStats:
             self.ss = None
 
     def pred(self): # gives predictions
-        if self.__classify:
-            return np.argmax(self.counts)
-        else:
-            return self.sum / (self.n+self.eps)
+        return self.sum / (self.n+self.eps) if self.__classify == False else np.argmax(self.counts)        
+        
+        # if self.__classify:
+        #     return np.argmax(self.counts)
+        # else:
+        #     return self.sum / (self.n+self.eps)
     
     def impurity(self):
         n = self.n + self.eps
-        if self.__classify:
-            return np.sum(list(map(lambda x: -x/n * np.log2(x/n + self.eps), self.counts))) # entropy
-        else:
+        
+        if self.__classify == False: # if regression
             prd = self.pred()
-            return np.sqrt( self.ss/n - prd*prd ) # sd of node
+            return np.sqrt( self.ss/n - prd**2 ) # sd of node
+        else: # if classification
+            return np.sum(list(map(lambda x: -x/n * np.log2(x/n + self.eps), self.counts))) # entropy
+
+        # if self.__classify:
+        #     return np.sum(list(map(lambda x: -x/n * np.log2(x/n + self.eps), self.counts))) # entropy
+        # else:
+        #     prd = self.pred()
+        #     return np.sqrt( self.ss/n - prd*prd ) # sd of node
 
 class Test:
     def __init__(self,dim,loc,numClasses):
@@ -366,7 +372,7 @@ class Elem: #HERE
         self.numTests = param['numTests'] if 'numTests' in param.keys() else 10
         self.splitDim = splitDim
         self.splitLoc = splitLoc
-        self.numSamplesSeen = numSamplesSeen
+        # self.numSamplesSeen = numSamplesSeen
         self.stats = SuffStats(self.numClasses)
         self.tests = [ self.generateTest() for _ in range(self.numTests) ]
 
@@ -387,7 +393,7 @@ class Elem: #HERE
     
     def update(self,x,y):
         self.stats.update(y)
-        self.numSamplesSeen += 1
+        # self.numSamplesSeen += 1
         for test in self.tests:
             test.update(x,y)
 
@@ -399,6 +405,15 @@ class Elem: #HERE
 
 
 # %%
+
+# def treeUpdate(argslist):
+#     ForestObject, x, y,  = argslist
+#     for i in range(ForestObject.numTrees):
+#         ForestObject[i].update(x, y)
+    
+#     if self.forest[i].age > 1/self.gamma:
+#         self.a_idx.append(i)
+
 class ORF:
     def __init__(self,param,numTrees=100,ncores=0):
         """
@@ -433,11 +448,9 @@ class ORF:
         self.classify = 1 if 'numClasses' in param.keys() else 0
         self.numTrees = numTrees
         self.forest = [ORT(param) for _ in range(numTrees)]
-        self.ncores = os.cpu_count()
+        self.ncores = 4
         self.gamma = 0.05
-
-    def treeUpdate(self, i):
-        self.forest[i].update(self.x, self.y)
+        # self.a_idx = []
 
     def update(self,x,y):
         """
@@ -448,29 +461,9 @@ class ORF:
         
         if self.ncores == 0:
             # parallel updates
+            print("error! no cores")
             pass # FIXME
         else:
-            # # sequential updates
-            
-            # for tree in self.forest:
-            #     tree.update(x,y) # update each t in ORTs
-            
-            # # Temporal Knowledge Weighting
-            
-            # ages = [tree.age for tree in self.forest]
-            # idx = [i for i, v in enumerate(ages) if v > 1/self.gamma]
-            
-            # k = int(len(self.forest)/6) # k = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
-            # if len(idx) > k:
-            #     randomIdx = random.choices(idx, k=k) # choose a random tree among those older than 1/gamma
-            #     OOBErrors = [tree.OOBError for tree in self.forest]
-            #     # goodTree = np.argmin(OOBErrors) # find a tree with
-                
-            #     for ridx in randomIdx:
-            #         r = np.random.uniform(0, 1)
-            #         if OOBErrors[ridx] > r: # if a randomly chosen tree's OOBE is larger than some random r
-            #             self.forest[ridx] = ORT(self.param) # discard the tree and construct a new tree
-                        
             # sequential updates
             
             idx = [] # idx of trees with age > 1/gamma
@@ -478,19 +471,6 @@ class ORF:
                 tree.update(x,y) # update each t in ORTs
                 if tree.age > 1/self.gamma:
                     idx.append(i)
-
-            # Multiprocessing
-            # pool.map(self.treeUpdate, range(len(self.forest)))
-            # pool.close()
-            # pool.join()
-            
-            # for i in range(len(self.forest)):
-            #     # self.forest[i].update(x, y)
-            #     if self.forest[i].age > 1/self.gamma:
-            #         idx.append(i)
-            
-            # Temporal Knowledge Weighting
-
             d = int(len(self.forest)/6) # d = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
             if len(idx) > d:
                 randomIdx = np.sort(np.random.choice(idx, size=d, replace=False)) # randomly choose trees older than 1/gamma
@@ -500,7 +480,23 @@ class ORF:
                 didx = [i for i, e, r in zip(randomIdx, OOBErrors, rr) if e > r]
                 
                 for i in didx:
-                    self.forest[i] = ORT(self.param) # discard the tree and construct a new tree                                    
+                    self.forest[i] = ORT(self.param) # discard the tree and construct a new tree  
+            # Multiprocessing
+            # pool.map(self.treeUpdate, range(len(self.forest)))
+            # pool.close()
+            # pool.join()
+            
+            # j = range(self.numTrees)
+            # pool.map(self.treeUpdate, j)
+            
+            # for i in range(self.numTrees):
+            #     self.treeUpdate(i)
+            #     if self.forest[i].age > 1/self.gamma:
+            #         idx.append(i)
+
+            # Temporal Knowledge Weighting
+
+                                              
                 
 
     def predict(self,x):
@@ -513,13 +509,24 @@ class ORF:
         orf.predict(x)
         """
         preds = [tree.predict(x) for tree in self.forest]
-        if self.classify: # if classification
+        
+        if self.classify == 0: # if regression
+            return np.sum(preds) / (len(preds)*1.0)
+        
+        else: # if classification
             cls_counts = [0] * self.param['numClasses']
             for p in preds:
                 cls_counts[p] += 1
             return np.argmax(cls_counts)
-        else:
-            return np.sum(preds) / (len(preds)*1.0)
+        
+        
+        # if self.classify: # if classification
+        #     cls_counts = [0] * self.param['numClasses']
+        #     for p in preds:
+        #         cls_counts[p] += 1
+        #     return np.argmax(cls_counts)
+        # else:
+        #     return np.sum(preds) / (len(preds)*1.0)
 
     def predicts(self,X):
         """
