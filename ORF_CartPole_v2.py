@@ -205,7 +205,7 @@ print("max reward = ", max(total_reward_episode))
 # In[23]:
 
 
-backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_2"
+backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_with_1CPU"
 img_file = backup_file_name + ".jpg"
 plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
