@@ -8,5 +8,5 @@
 
 module load python/3.7
 source ~/torch/bin/activate
-python "ORF_CartPole.py"
+python "ORF_CartPole_v2.py"
 
