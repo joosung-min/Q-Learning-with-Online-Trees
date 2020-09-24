@@ -214,9 +214,9 @@ env = gym.envs.make("CartPole-v1")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
-n_episode = 300
+n_episode = 250
 replay_size = 32
-reps = 25
+reps = 10
 
 rep_TRES = []
 
@@ -235,7 +235,7 @@ start = time.time()
 
 for i in range(reps):
     memory = deque(maxlen=100000)
-    ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 11, 'numTrees': 10, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+    ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 10, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
     dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
     total_reward_episode = np.zeros(n_episode)
     q_learning(env, dqn, n_episode, replay_size, gamma=QLparams['gamma'], epsilon=QLparams['epsilon'], epsilon_decay=QLparams['epsilon_decay']) # runs the alg
