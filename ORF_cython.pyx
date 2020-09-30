@@ -672,7 +672,7 @@ cdef class ORF_DQN:
             for state, action, next_state, reward, is_done in replay_data:
                 
                 q_values = self.predict(state) # (, n_actions)
-                q_values[action] = reward + gamma * np.max(self.predict(next_state)) if is_done == False else -1000 * reward
+                q_values[action] = reward + gamma * np.max(self.predict(next_state)) if is_done == False else 1000 * reward
                 
                 # Update the RF for the action taken
                 xrng = dataRange([v[0] for v in replay_data if v[1] == action])
