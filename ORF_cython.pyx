@@ -1,11 +1,18 @@
+#!python
+#cython: language_level=3, boundscheck=False, wraparound=False
+#cython: 
 import numpy as np
 import sys
 import random
 import math
 import unittest
+from tqdm import tqdm
+cimport numpy as np
+cimport cython
 
 ncores = 4
-
+# pool = multiprocessing.Pool(processes=ncores)
+# pool = ProcessPoolExecutor(max_workers=ncores)
 def dataRange(X):
     """
     Accepts a list of lists (X) and returns the "column" ranges. e.g.
@@ -18,16 +25,14 @@ def dataRange(X):
     def col(j):
         return [x[j] for x in X]
         # return list(map(lambda x: x[j], X))
-    
-    cdef int k
-    
+
     k = len(X[0]) # number of columns in X
     return [[np.min(col(j)), np.max(col(j))] for j in range(k)]
     # return list(map(lambda j: [ min(col(j)), max(col(j)) ], range(k)))
 
 
-
-cdef class Tree: # Node object
+# %%
+class Tree: # Node object
     """
     # Tree - Binary tree class
 
@@ -62,7 +67,7 @@ cdef class Tree: # Node object
         self.left = left
         self.right = right
 
-    cdef updateChildren(self,l,r):
+    def updateChildren(self,l,r):
         """
         updates the left and right children trees.  e.g.
 
@@ -78,32 +83,31 @@ cdef class Tree: # Node object
         """
         self.left, self.right = l,r
 
-    cpdef isLeaf(self):
+    def isLeaf(self):
         """
         returns a boolean. True if the Tree has no children, False otherwise
         """
-        # return _isLeaf(self.left, self.right)
         return self.left == None and self.right == None
 
-    cpdef size(self):
+    def size(self):
         """
         returns the number of internal nodes in tree
         """
         return 1 if self.isLeaf() else self.left.size() + self.right.size() + 1
     
-    cpdef int numLeaves(self):
+    def numLeaves(self):
         """
         returns number of leaves in tree
         """
         return  1 if self.isLeaf() else self.left.numLeaves() + self.right.numLeaves()
 
-    cpdef maxDepth(self):
+    def maxDepth(self):
         """
         returns maximum depth of tree
         """
         return self.__md(1)
 
-    cpdef __md(self,s):
+    def __md(self,s):
         return s if self.isLeaf() else max(self.left.__md(s+1),self.right.__md(s+1))
 
     def inOrder(self):
@@ -156,7 +160,8 @@ cdef class Tree: # Node object
         return [top] + bottom
 
 
-cdef class ORT: # Tree object
+# %%
+class ORT: # Tree object
     """
     constructor for Online Random Forest (ORT)
     The theory for ORT was developed by Amir Saffari. see http://lrs.icg.tugraz.at/pubs/saffari_olcv_09.pdf
@@ -183,15 +188,6 @@ cdef class ORT: # Tree object
         param = {'minSamples': 5, 'minGain': .1, 'numClasses': 10, 'xrng': xrng}
         ort = ORT(param)
     """
-    cdef int age
-    cdef int minSamples
-    cdef float minGain
-    cdef float gamma
-    cdef int numTests
-    cdef int numClasses
-    cdef int maxDepth
-    cdef float OOBError
-
     def __init__(self,param):
         self.param = param
         self.age = 0
@@ -207,7 +203,15 @@ cdef class ORT: # Tree object
         # self.error_sum = 0
         # self.error_n = 0
 
-    cpdef update(self,x,y):
+    def draw(self):
+        """
+        draw a pretty online random tree. Usage:
+
+        ort.draw()
+        """
+        print(self.tree.treeString(fun=True))
+
+    def update(self,x,y):
         """
         updates the ORT
 
@@ -218,8 +222,6 @@ cdef class ORT: # Tree object
 
         ort.update(x,y)
         """
-        cdef int k
-        
         # k = self.__poisson(1) # draw a random poisson
         
         k = np.random.poisson(lam=1)
@@ -243,7 +245,7 @@ cdef class ORT: # Tree object
                         j.right.elem.stats = bestTest.statsR
                         j.elem.reset()
 
-    cpdef predict(self,x):
+    def predict(self,x):
         """
         returns a scalar prediction based on input (x)
 
@@ -256,17 +258,9 @@ cdef class ORT: # Tree object
         """
         return self.__findLeaf(x,self.tree)[0].elem.pred() # [0] returns the node, [1] returns the depth
 
-    cdef __gains(self,elem):
+    def __gains(self,elem):
         tests = elem.tests
-        cdef float nL
-        cdef float nR
-        cdef float n
-        cdef float lossL
-        cdef float lossR
-        cdef float g
-
         def gain(test):
-            
             statsL, statsR = test.statsL,test.statsR
             nL,nR = statsL.n,statsR.n
             n = nL + nR + 1E-9
@@ -276,26 +270,32 @@ cdef class ORT: # Tree object
             return 0 if g < 0 else g
         return np.array([gain(test) for test in tests])
 
-    cpdef __findLeaf(self, x, tree, int depth=0):
-        cdef int dim
-        cdef int loc 
+    def __findLeaf(self, x, tree, depth=0):
+        
+        tr = tree    
         while True:
-            if tree.isLeaf():
-                return (tree, depth)
+            if tr.isLeaf():
+                return (tr, depth)
             else:
-                (dim,loc) = tree.elem.split()
-                tree = tree.left if x[dim] < loc else tree.right
+                (dim,loc) = tr.elem.split()
+                tr = tr.left if x[dim] < loc else tr.right
                 depth += 1
         
-        # # for jit
-        # return(_findLeaf(x, tree, depth=0))
+        # if tree.isLeaf(): 
+        #     return (tree,depth)
+        # else:
+        #     (dim,loc) = tree.elem.split()
+        #     return self.__findLeaf(x, tree.left, depth+1) if x[dim] < loc else self.__findLeaf(x,tree.right,depth+1)
 
         
-cdef class SuffStats:
-    cdef int n
-    cdef float sum
-    cdef float ss
 
+
+            # if x[dim] < loc:
+            #     return self.__findLeaf(x,tree.left,depth+1)
+            # else:
+            #     return self.__findLeaf(x,tree.right,depth+1)
+
+class SuffStats:
     def __init__(self,numClasses=0,sm=0.0,ss=0.0):
         self.n = 0
         self.__classify = numClasses > 0
@@ -306,7 +306,7 @@ cdef class SuffStats:
             self.sum = sm
             self.ss = ss
 
-    cpdef update(self,float y):
+    def update(self,y):
         self.n += 1
         
         if self.__classify == False: # if regression
@@ -322,15 +322,15 @@ cdef class SuffStats:
         #     self.sum += y
         #     self.ss += y**2
 
-    cdef reset(self):
+    def reset(self):
         if self.__classify == False:
-            self.sum = 0
-            self.ss = 0
+            self.sum = None
+            self.ss = None
         else: 
-            self.counts = 0
-        self.n = 0
-        # self.eps = None
-        self.__classify = False
+            self.counts = None
+        self.n = None
+        self.eps = None
+        self.__classify = None
         
         # if self.__classify:
         #     self.counts = None
@@ -338,7 +338,7 @@ cdef class SuffStats:
         #     self.sum = None
         #     self.ss = None
 
-    cpdef pred(self): # gives predictions
+    def pred(self): # gives predictions
         return self.sum / (self.n+self.eps) if self.__classify == False else np.argmax(self.counts)        
         
         # if self.__classify:
@@ -346,7 +346,7 @@ cdef class SuffStats:
         # else:
         #     return self.sum / (self.n+self.eps)
 
-    cdef float impurity(self):        
+    def impurity(self):        
         n = self.n + self.eps
         if self.__classify == False: # if regression
             prd = self.pred()
@@ -360,30 +360,22 @@ cdef class SuffStats:
         #     prd = self.pred()
         #     return np.sqrt( self.ss/n - prd*prd ) # sd of node
 
-cdef class Test:
-    cdef int dim
-    cdef int loc 
-
-    def __init__(self,int dim,int loc,int numClasses):
+class Test:
+    def __init__(self,dim,loc,numClasses):
         self.__classify = numClasses > 0
         self.statsL = SuffStats(numClasses=numClasses)
         self.statsR = SuffStats(numClasses=numClasses)
         self.dim = dim
         self.loc = loc
 
-    cdef update(self,x,float y):
+    def update(self,x,y):
         if x[self.dim] < self.loc:
             self.statsL.update(y) 
         else:
             self.statsR.update(y)
 
-cdef class Elem: #HERE
-    
-    cdef int xdim 
-    cdef int splitDim
-    cdef int splitLoc
-
-    def __init__(self,param,int splitDim=-1,int splitLoc=0,int numSamplesSeen=0):
+class Elem: #HERE
+    def __init__(self,param,splitDim=-1,splitLoc=0,numSamplesSeen=0):
         self.xrng = param['xrng']
         self.xdim = len(param['xrng']) # number of features in x
         self.numClasses = param['numClasses'] if 'numClasses' in param.keys() else 0
@@ -394,13 +386,11 @@ cdef class Elem: #HERE
         self.stats = SuffStats(self.numClasses)
         self.tests = [ self.generateTest() for _ in range(self.numTests) ]
 
-    cdef reset(self):
+    def reset(self):
         self.stats = None #self.stats.reset()
         self.tests = None
 
-    cdef generateTest(self): 
-        cdef int dim
-        cdef int loc
+    def generateTest(self):
         dim = random.randrange(self.xdim) # pick a random feature among x
         loc = random.uniform(self.xrng[dim][0],self.xrng[dim][1]) # pick a random value between x_min, x_max
         return Test(dim, loc, self.numClasses)
@@ -408,30 +398,34 @@ cdef class Elem: #HERE
     def toString(self):
         return str(self.pred()) if self.splitDim == -1 else "X" + str(self.splitDim+1) + " < " + str(round(self.splitLoc,2))
 
-    cdef float pred(self): # gives the predicted value
+    def pred(self): # gives the predicted value
         return self.stats.pred()
     
-    cdef update(self,x, float y):
+    def update(self,x,y):
         self.stats.update(y)
         # self.numSamplesSeen += 1
         for test in self.tests:
             test.update(x,y)
 
-    cdef updateSplit(self, int dim,int loc):
+    def updateSplit(self,dim,loc):
         self.splitDim, self.splitLoc = dim, loc
 
-    cdef split(self):
+    def split(self):
         return (self.splitDim,self.splitLoc)
 
 
-cdef class ORF:
-    
-    cdef int classify
-    cdef int numTrees
-    cdef int ncores 
-    cdef float gamma
+# %%
 
-    def __init__(self,param,numTrees=100, ncores=0):
+# def treeUpdate(argslist):
+#     ForestObject, x, y,  = argslist
+#     for i in range(ForestObject.numTrees):
+#         ForestObject[i].update(x, y)
+    
+#     if self.forest[i].age > 1/self.gamma:
+#         self.a_idx.append(i)
+
+class ORF:
+    def __init__(self,param,numTrees=100,ncores=0):
         """
         Constructor for Online Random Forest. For more info: >>> help(ORT)
 
@@ -468,16 +462,12 @@ cdef class ORF:
         self.gamma = 0.05
         # self.a_idx = []
 
-    cdef update(self,x, float y, xrng):
+    def update(self,x,y, xrng):
         """
         updates the random forest by updating each tree in the forest. As mentioned above, this is currently not implemented. Please replace 'pass' (below) by the appropriate implementation.
         """
-        # params = [self.forest, self.gamma, self.param]
-        # _forestUpdate(params, x, y, xrng)
-
-        # sequential updates    
-        cdef int d
         
+        # sequential updates    
         idx = [] # idx of trees with age > 1/gamma
         for i, tree in enumerate(self.forest):
             tree.update(x,y) # update each t in ORF
@@ -498,7 +488,7 @@ cdef class ORF:
                 self.forest[i] = ORT(self.param) # discard the tree and construct a new tree                                      
                 
 
-    cdef predict(self,x):
+    def predict(self,x):
         """
         returns prediction (a scalar) of ORF based on input (x) which is a list of input variables
 
@@ -527,7 +517,7 @@ cdef class ORF:
         # else:
         #     return np.sum(preds) / (len(preds)*1.0)
 
-    cdef predicts(self,X):
+    def predicts(self,X):
         """
         returns predictions (a list) of ORF based on inputs (X) which is a list of list input variables
 
@@ -538,7 +528,7 @@ cdef class ORF:
         """
         return [self.predict(x) for x in X]
 
-    cpdef predStat(self,x,f):
+    def predStat(self,x,f):
         """
         returns a statistic aka function (f) of the predictions of the trees in the forest given input x.
 
@@ -576,6 +566,35 @@ cdef class ORF:
     def sdMaxDepth(self):
         return np.std([ort.tree.maxDepth() for ort in self.forest])
     
+    def confusion(self,xs,ys):
+        """
+        creates a confusion matrix based on list of list of inputs xs, and list of responses (ys). Ideally, xs and ys are out-of-sample data.
+
+        usage:
+
+        orf.confusion(xs,ys)
+        """
+        n = self.param['numClasses']
+        assert n > 1, "Confusion matrices can only be obtained for classification data." 
+        preds = self.predicts(xs)
+        conf = [[0] * n for _ in range(n)]
+        for (y,p) in zip(ys,preds):
+            conf[int(y)][p] += 1
+        return conf
+    
+    def printConfusion(self,conf):
+        """
+        simply prints the confusion matrix from the previous confusion method.
+
+        usage:
+        conf = orf.confusion(xs,ys)
+        orf.printConfusion(conf)
+        """
+        print("y/pred" + "\t" + "\t".join(map(str,range(self.param['numClasses']))))
+        i = 0
+        for row in conf:
+            print(str(i) + "\t" + "\t".join(map(str,row)))
+            i += 1
 
 # Other functions:
 def mean(xs):
@@ -586,4 +605,113 @@ def sd(xs):
     mu = np.sum(xs) / n
     return np.sqrt( sum(list(map(lambda x: (x-mu)*(x-mu),xs))) / (n-1) )
 
-# %%
+cdef class ORF_DQN: 
+    
+    cdef public a_model, a_params, isFit
+    cdef public int n_action, maxTrees
+
+    def __init__(self, n_state, n_action, replay_size, ORFparams):
+        self.n_action = n_action
+        self.a_model = {} # to build RF for each action
+        self.a_params = {a: ORFparams for a in range(n_action)}
+        self.isFit = False
+        self.maxTrees = ORFparams['maxTrees']
+    
+    cpdef predict(self, s):            
+        # s: (4,) array (for cartpole)
+        # preds = []
+        # for a in range(self.n_action):
+        #     preds.append(self.a_model[a].predict(s))
+        
+        preds = [self.a_model[a].predict(s) for a in range(self.n_action)]
+        # print(preds)
+        return preds
+
+    def gen_epsilon_greedy_policy(self, float epsilon, int n_action):
+        
+        def policy_function(state):
+            # state: (4,) array
+            ran = "_"
+            q_values =[0.0, 0.0]
+            if np.random.uniform(0,1) < epsilon:
+                ran = "Random"
+                return([random.randint(0, n_action - 1), ran, q_values])
+            else:
+                if self.isFit == True:
+                    ran = "Model"
+                    q_values = self.predict(state) # (1,2) array
+                    # print(q_values)
+                else: 
+                    ran = "Random_notFit"
+                    return([random.randint(0, n_action - 1), ran, q_values])
+                    # print("passed random.randint")
+            return([np.argmax(q_values), ran, q_values])# int
+        
+        return policy_function
+
+
+    # def expandForest(self, memory):
+    #     for a in range(self.n_action):
+    #         self.a_params[a]['xrng'] = dataRange([v[0] for v in memory if v[1] == a])
+    #         lenFor = len(self.a_model[a].forest)
+    #         for i in range(lenFor+1, self.maxTrees):
+    #             self.a_model[a].forest[i] = ORF.ORT(self.a_params[a]) # build new empty trees
+    
+
+    cpdef replay(self, memory, int replay_size, float gamma, int episode):
+
+        if len(memory) == replay_size: # Build initial Forests
+            
+            for a in range(self.n_action):
+                self.a_params[a]['xrng'] = dataRange([v[0] for v in memory if v[1] == a])
+                self.a_model[a] = ORF(self.a_params[a]) # Fit initial RFs for each action            
+
+        if len(memory) >= replay_size: # When the memory size exceeds the replay_size, start updating the RFs            
+            
+            replay_data = random.sample(memory, replay_size) # replay_data consists of [state, action, next_state, reward, is_done]
+            for state, action, next_state, reward, is_done in replay_data:
+                
+                q_values = self.predict(state) # (, n_actions)
+                q_values[action] = reward + gamma * np.max(self.predict(next_state)) if is_done == False else -1000 * reward
+                
+                # Update the RF for the action taken
+                xrng = dataRange([v[0] for v in replay_data if v[1] == action])
+                self.a_model[action].update(state, q_values[action], xrng)    
+            self.isFit = True
+               
+        if episode == 100: # expand the number of trees at episode 100            
+            # expandForest(memory)
+            for a in range(self.n_action):
+                self.a_params[a]['xrng'] = dataRange([v[0] for v in memory if v[1] == a])
+                lenFor = len(self.a_model[a].forest)
+                for i in range(lenFor+1, self.maxTrees):
+                    self.a_model[a].forest[i] = ORT(self.a_params[a]) # build new empty trees
+
+def q_learning(env, estimator, n_episode, n_action, memory, replay_size, gamma=1.0, epsilon=0.1, epsilon_decay=0.95):
+    
+    total_reward_episode = np.zeros(n_episode)
+    for episode in tqdm(range(n_episode)):
+        policy = estimator.gen_epsilon_greedy_policy(epsilon, n_action)
+        state = env.reset()
+        is_done = False
+        i = 0
+        while not is_done:
+            action, ran, pred = policy(state) # integer
+            next_state, reward, is_done, _ = env.step(action)
+            i += 1
+            # next_state: 4x1 array (for cartpole)
+            # reward: integer
+            # is_done: bool (True/False)
+            
+            total_reward_episode[episode] += reward
+            
+            # ep[episode].append((i, state, ran, action))
+            memory.append((state, action, next_state, reward, is_done))
+            
+            if is_done:
+                break
+            estimator.replay(memory, replay_size, gamma, episode)
+            state = next_state
+        epsilon = np.max([epsilon * epsilon_decay, 0.001])
+        # print(epsilon)
+    return total_reward_episode
