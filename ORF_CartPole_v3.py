@@ -202,7 +202,7 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
                 break
             estimator.replay(memory, replay_size, gamma, episode)
             state = next_state
-        epsilon = np.max([epsilon * epsilon_decay, 0.01])
+        epsilon = np.max([epsilon * epsilon_decay, 0.001])
         # print(epsilon)
 
 
@@ -214,8 +214,8 @@ env = gym.envs.make("CartPole-v1")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
-n_episode = 250
-replay_size = 32
+n_episode = 300
+replay_size = 24
 reps = 10
 
 rep_TRES = []
@@ -234,8 +234,8 @@ start = time.time()
 
 
 for i in range(reps):
-    memory = deque(maxlen=100000)
-    ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 10, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+    memory = deque(maxlen=10000)
+    ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
     dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
     total_reward_episode = np.zeros(n_episode)
     q_learning(env, dqn, n_episode, replay_size, gamma=QLparams['gamma'], epsilon=QLparams['epsilon'], epsilon_decay=QLparams['epsilon_decay']) # runs the alg
@@ -249,8 +249,8 @@ duration = int(end - start)
 # print("mean reward = ", np.mean(total_reward_episode))
 # print("max reward = ", max(total_reward_episode))
 
-mean_total_reward_episode = np.mean(rep_TRES, axis=0) # column mean
-mean_total_reward_episode
+#mean_total_reward_episode = np.mean(rep_TRES, axis=0) # column mean
+#mean_total_reward_episode
 
 
 # In[44]:
@@ -258,13 +258,13 @@ mean_total_reward_episode
 
 backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_maxTree30_1"
 img_file = backup_file_name + ".jpg"
-plt.plot(mean_total_reward_episode)
-plt.title("(ORF) Total reward per episode")
-plt.xlabel("Episode")
-plt.ylabel("Total reward")
-plt.hlines(195, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
-plt.show()
-plt.savefig(fname = img_file)
+#plt.plot(mean_total_reward_episode)
+#plt.title("(ORF) Total reward per episode")
+#plt.xlabel("Episode")
+#plt.ylabel("Total reward")
+#plt.hlines(195, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
+#plt.show()
+#plt.savefig(fname = img_file)
 
 
 # In[25]:
@@ -275,11 +275,12 @@ backup_file = backup_file_name + ".p"
 backup_check = os.path.isfile(backup_file)
 
 myEnv = dict()
-myEnv["t_r_e"] = total_reward_episode
+#myEnv["t_r_e"] = total_reward_episode
 myEnv["duration"] = duration
 myEnv["episode_details"] = ep
 myEnv["ORFparams"] = ORFparams
 myEnv["QLparams"] = QLparams
+myEnv["repTRES"] = rep_TRES
 # myEnv["ORF_params"] = params
 
 with open(backup_file, "wb") as file:

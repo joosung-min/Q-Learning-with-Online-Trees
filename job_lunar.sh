@@ -8,5 +8,6 @@
 
 module load python/3.8
 source ~/torch/bin/activate
-python "ORF_CartPole_v3.py"
+python setup_ORF.py build_ext --inplace
+python "ORF_LunarLander_v1.py"
 

@@ -1,5 +1,3 @@
-%%pypy
-
 # %% [markdown]
 # **Changes**
 # 
