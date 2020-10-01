@@ -50,12 +50,12 @@
 # 
 # 
 
-# In[2]:
+# In[8]:
 
 
 # Changes in v3: 
 # Expand number of trees to maxTrees at episode = 100
-# Repeat q_learning many times, plot the mean(total_reward_episode)
+# !apt-get install pypy
 
 
 # In[3]:
@@ -77,22 +77,16 @@ import datetime
 # from cProfile import Profile
 
 
-# In[4]:
+# In[10]:
 
 
-# On Google Colab
-# # -------------------------------------------------------------------------
 # from google.colab import drive
-# drive.mount('/content/drive/')
-# %cd /content/drive/My\ Drive/Colab\ Notebooks/TreeRL/
-# !ls
-# import sys
-# sys.path.insert(0, '/content/drive/My\ Drive/Colab\ Notebooks/TreeRL/')
-# # --------------------------------------------------------------------------
-import ORF
+# drive.mount('/content/drive')
+# %cd /content/drive/My\ Drive/ShallowQlearning
+import ORF as ORF
 
 
-# In[33]:
+# In[11]:
 
 
 class ORF_DQN(): 
@@ -106,7 +100,9 @@ class ORF_DQN():
     
     def predict(self, s):            
         # s: (4,) array (for cartpole)
+        
         preds = [self.a_model[a].predict(s) for a in range(self.n_action)]
+        # print(preds)
         return preds
 
     def gen_epsilon_greedy_policy(self, epsilon, n_action):
@@ -114,7 +110,7 @@ class ORF_DQN():
         def policy_function(state):
             # state: (4,) array
             ran = "_"
-            q_values =[0.0, 0.0]
+            q_values = np.array([0.0, 0.0])
             if np.random.uniform(0,1) < epsilon:
                 ran = "Random"
                 return([random.randint(0, n_action - 1), ran, q_values])
@@ -146,9 +142,7 @@ class ORF_DQN():
             
             for a in range(self.n_action):
                 self.a_params[a]['xrng'] = ORF.dataRange([v[0] for v in memory if v[1] == a])
-                self.a_model[a] = ORF.ORF(self.a_params[a]) # Fit initial RFs for each action
-            print("model created!")
-            print(self.a_model[0], self.a_model[1])            
+                self.a_model[a] = ORF.ORF(self.a_params[a]) # Fit initial RFs for each action            
 
         if len(memory) >= replay_size: # When the memory size exceeds the replay_size, start updating the RFs            
             
@@ -175,7 +169,7 @@ class ORF_DQN():
             
 
 
-# In[40]:
+# In[12]:
 
 
 def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, epsilon_decay=0.95):
@@ -206,7 +200,7 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
         # print(epsilon)
 
 
-# In[41]:
+# In[13]:
 
 
 # Initialization
@@ -214,24 +208,35 @@ env = gym.envs.make("CartPole-v1")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
+<<<<<<< HEAD
 n_episode = 300
 replay_size = 24
 reps = 10
+=======
+memory = deque(maxlen=10000)
+n_episode = 500
+replay_size = 24
 
-rep_TRES = []
+ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 13, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+>>>>>>> a14725ef310ea71b36425b91f0135783670cb55e
+
+dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
+
+total_reward_episode = [0] * n_episode
 
 ep = {i: [] for i in range(n_episode)}
 
 QLparams = {'gamma' : 1.0, 'epsilon' : 0.5, 'epsilon_decay' : 0.99}
 
 
-# In[43]:
+# In[14]:
 
 
 # Run alg
 
 start = time.time()
 
+<<<<<<< HEAD
 
 for i in range(reps):
     memory = deque(maxlen=10000)
@@ -240,24 +245,37 @@ for i in range(reps):
     total_reward_episode = np.zeros(n_episode)
     q_learning(env, dqn, n_episode, replay_size, gamma=QLparams['gamma'], epsilon=QLparams['epsilon'], epsilon_decay=QLparams['epsilon_decay']) # runs the alg
     rep_TRES.append(total_reward_episode)
+=======
+q_learning(env, dqn, n_episode, replay_size, gamma=QLparams['gamma'], epsilon=QLparams['epsilon'], epsilon_decay=QLparams['epsilon_decay']) # runs the alg
+>>>>>>> a14725ef310ea71b36425b91f0135783670cb55e
 
 end = time.time()
 
 duration = int(end - start)
 
-# print("learning duration =", duration, " seconds")
-# print("mean reward = ", np.mean(total_reward_episode))
-# print("max reward = ", max(total_reward_episode))
+print("learning duration =", duration, " seconds")
+print("mean reward = ", np.mean(total_reward_episode))
+print("max reward = ", max(total_reward_episode))
 
+
+<<<<<<< HEAD
 #mean_total_reward_episode = np.mean(rep_TRES, axis=0) # column mean
 #mean_total_reward_episode
+=======
+# In[15]:
+>>>>>>> a14725ef310ea71b36425b91f0135783670cb55e
 
 
-# In[44]:
+import sys
+sys.version
 
 
-backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_maxTree30_1"
+# In[ ]:
+
+
+backup_file_name = "ORF_CartPole_" + time.strftime("%y%m%d") + "_1"
 img_file = backup_file_name + ".jpg"
+<<<<<<< HEAD
 #plt.plot(mean_total_reward_episode)
 #plt.title("(ORF) Total reward per episode")
 #plt.xlabel("Episode")
@@ -265,9 +283,18 @@ img_file = backup_file_name + ".jpg"
 #plt.hlines(195, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
 #plt.show()
 #plt.savefig(fname = img_file)
+=======
+plt.plot(total_reward_episode)
+plt.title("(ORF) Total reward per episode")
+plt.xlabel("Episode")
+plt.ylabel("Total reward")
+plt.hlines(195, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
+plt.show()
+plt.savefig(fname = img_file)
+>>>>>>> a14725ef310ea71b36425b91f0135783670cb55e
 
 
-# In[25]:
+# In[ ]:
 
 
 # To back-up the work
@@ -338,14 +365,14 @@ with open(backup_file, "wb") as file:
     """
 
 
-# In[8]:
+# In[ ]:
 
 
-# import pstats
-# stats = pstats.Stats("profile_200913.pfl")
-# stats.strip_dirs()
-# stats.sort_stats('cumulative')
-# stats.print_stats()
+import pstats
+stats = pstats.Stats("profile_200913.pfl")
+stats.strip_dirs()
+stats.sort_stats('cumulative')
+stats.print_stats()
 
 
 # In[ ]:
