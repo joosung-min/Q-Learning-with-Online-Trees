@@ -208,17 +208,11 @@ env = gym.envs.make("CartPole-v1")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
-<<<<<<< HEAD
-n_episode = 300
-replay_size = 24
-reps = 10
-=======
 memory = deque(maxlen=10000)
 n_episode = 500
 replay_size = 24
 
 ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 13, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
->>>>>>> a14725ef310ea71b36425b91f0135783670cb55e
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -229,25 +223,17 @@ ep = {i: [] for i in range(n_episode)}
 QLparams = {'gamma' : 1.0, 'epsilon' : 0.5, 'epsilon_decay' : 0.99}
 
 
-# In[14]:
-
 
 # Run alg
 
 start = time.time()
 
-<<<<<<< HEAD
 
-for i in range(reps):
-    memory = deque(maxlen=10000)
-    ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
-    dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
-    total_reward_episode = np.zeros(n_episode)
-    q_learning(env, dqn, n_episode, replay_size, gamma=QLparams['gamma'], epsilon=QLparams['epsilon'], epsilon_decay=QLparams['epsilon_decay']) # runs the alg
-    rep_TRES.append(total_reward_episode)
-=======
+memory = deque(maxlen=10000)
+ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
+total_reward_episode = np.zeros(n_episode)
 q_learning(env, dqn, n_episode, replay_size, gamma=QLparams['gamma'], epsilon=QLparams['epsilon'], epsilon_decay=QLparams['epsilon_decay']) # runs the alg
->>>>>>> a14725ef310ea71b36425b91f0135783670cb55e
 
 end = time.time()
 
@@ -258,12 +244,8 @@ print("mean reward = ", np.mean(total_reward_episode))
 print("max reward = ", max(total_reward_episode))
 
 
-<<<<<<< HEAD
 #mean_total_reward_episode = np.mean(rep_TRES, axis=0) # column mean
 #mean_total_reward_episode
-=======
-# In[15]:
->>>>>>> a14725ef310ea71b36425b91f0135783670cb55e
 
 
 import sys
@@ -283,7 +265,6 @@ img_file = backup_file_name + ".jpg"
 #plt.hlines(195, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
 #plt.show()
 #plt.savefig(fname = img_file)
-=======
 plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
 plt.xlabel("Episode")
@@ -291,7 +272,6 @@ plt.ylabel("Total reward")
 plt.hlines(195, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
 plt.show()
 plt.savefig(fname = img_file)
->>>>>>> a14725ef310ea71b36425b91f0135783670cb55e
 
 
 # In[ ]:

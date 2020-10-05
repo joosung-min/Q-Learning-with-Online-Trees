@@ -712,6 +712,6 @@ def q_learning(env, estimator, n_episode, n_action, memory, replay_size, gamma=1
                 break
             estimator.replay(memory, replay_size, gamma, episode)
             state = next_state
-        epsilon = np.max([epsilon * epsilon_decay, 0.001])
+        epsilon = np.max([epsilon * epsilon_decay, 0.01])
         # print(epsilon)
     return total_reward_episode
