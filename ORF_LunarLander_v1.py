@@ -123,7 +123,7 @@ memory = deque(maxlen=10000)
 n_episode = 400
 replay_size = 32
 
-ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 30, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 30, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
 
 dqn = ORF.ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -131,7 +131,7 @@ total_reward_episode = np.zeros(n_episode)
 
 ep = {i: [] for i in range(n_episode)}
 
-QLparams = {'gamma' : 1.0, 'epsilon' : 0.5, 'epsilon_decay' : 0.99}
+QLparams = {'gamma' : 1.0, 'epsilon' : 1.0, 'epsilon_decay' : 0.99}
 
 
 # In[10]:
@@ -158,7 +158,7 @@ print("max reward = ", max(total_reward_episode))
 
 
 # backup_file_name = "ORF_LunarLander_" + time.strftime("%y%m%d") + "_1"
-backup_file_name = "ORF_LunarLander_" + time.strftime("%y%m%d") + "_iter1"
+backup_file_name = "ORF_LunarLander_" + time.strftime("%y%m%d") + "_iter2"
 img_file = backup_file_name + ".jpg"
 plt.plot(result)
 plt.title("(ORF) Total reward per episode")
