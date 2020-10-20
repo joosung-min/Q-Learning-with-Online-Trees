@@ -119,7 +119,7 @@ env = gym.envs.make("LunarLander-v2")
 # env=gym.envs.make("CartPole-v1")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
-memory = deque(maxlen=10000)
+memory = deque(maxlen=100000)
 n_episode = 400
 replay_size = 32
 

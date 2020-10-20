@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -t 5-00:00
+#SBATCH -t 14-00:00
 #SBATCH --account=rrg-lelliott
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=8G
@@ -8,5 +8,6 @@
 
 module load python/3.8
 source ~/torch/bin/activate
-python "ORF_CartPole_v3.py"
+python setup_ORF.py build_ext --inplace
+python "ORF_MountainCar.py"
 
