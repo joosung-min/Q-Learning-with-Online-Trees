@@ -2786,7 +2786,6 @@ static PyObject *__pyx_int_4;
 static PyObject *__pyx_int_10;
 static PyObject *__pyx_int_30;
 static PyObject *__pyx_int_100;
-static PyObject *__pyx_int_1000;
 static PyObject *__pyx_int_85437229;
 static PyObject *__pyx_int_neg_1;
 static PyObject *__pyx_tuple_;
@@ -16924,7 +16923,7 @@ static PyObject *__pyx_f_10ORF_cython_7ORF_DQN_replay(struct __pyx_obj_10ORF_cyt
  *             for state, action, next_state, reward, is_done in replay_data:
  * 
  *                 q_values = self.predict(state) # (, n_actions)             # <<<<<<<<<<<<<<
- *                 q_values[action] = reward + gamma * np.max(self.predict(next_state)) if is_done == False else 1000 * reward
+ *                 q_values[action] = reward + gamma * np.max(self.predict(next_state)) if is_done == False else reward
  * 
  */
       __pyx_t_6 = ((struct __pyx_vtabstruct_10ORF_cython_ORF_DQN *)__pyx_v_self->__pyx_vtab)->predict(__pyx_v_self, __pyx_v_state, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 674, __pyx_L1_error)
@@ -16935,7 +16934,7 @@ static PyObject *__pyx_f_10ORF_cython_7ORF_DQN_replay(struct __pyx_obj_10ORF_cyt
       /* "ORF_cython.pyx":675
  * 
  *                 q_values = self.predict(state) # (, n_actions)
- *                 q_values[action] = reward + gamma * np.max(self.predict(next_state)) if is_done == False else 1000 * reward             # <<<<<<<<<<<<<<
+ *                 q_values[action] = reward + gamma * np.max(self.predict(next_state)) if is_done == False else reward             # <<<<<<<<<<<<<<
  * 
  *                 # Update the RF for the action taken
  */
@@ -16978,10 +16977,8 @@ static PyObject *__pyx_f_10ORF_cython_7ORF_DQN_replay(struct __pyx_obj_10ORF_cyt
         __pyx_t_6 = __pyx_t_4;
         __pyx_t_4 = 0;
       } else {
-        __pyx_t_4 = PyNumber_Multiply(__pyx_int_1000, __pyx_v_reward); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 675, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_6 = __pyx_t_4;
-        __pyx_t_4 = 0;
+        __Pyx_INCREF(__pyx_v_reward);
+        __pyx_t_6 = __pyx_v_reward;
       }
       if (unlikely(PyObject_SetItem(__pyx_v_q_values, __pyx_v_action, __pyx_t_6) < 0)) __PYX_ERR(0, 675, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -24433,7 +24430,6 @@ static CYTHON_SMALL_CODE int __Pyx_InitGlobals(void) {
   __pyx_int_10 = PyInt_FromLong(10); if (unlikely(!__pyx_int_10)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_30 = PyInt_FromLong(30); if (unlikely(!__pyx_int_30)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_100 = PyInt_FromLong(100); if (unlikely(!__pyx_int_100)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_1000 = PyInt_FromLong(1000); if (unlikely(!__pyx_int_1000)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_85437229 = PyInt_FromLong(85437229L); if (unlikely(!__pyx_int_85437229)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_neg_1 = PyInt_FromLong(-1); if (unlikely(!__pyx_int_neg_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
