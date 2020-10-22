@@ -1,5 +1,5 @@
 from distutils.core import setup
 from Cython.Build import cythonize
 setup(
-    ext_modules = cythonize("ORF_cython.pyx")
+    ext_modules = cythonize("ORF_py_cython.pyx")
 )
