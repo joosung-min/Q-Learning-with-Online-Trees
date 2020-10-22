@@ -18,7 +18,7 @@ import datetime
 # In[2]:
 
 
-import ORF_py as ORF
+import ORF_py_cython as ORF
 
 
 # In[3]:
@@ -143,11 +143,11 @@ env = gym.envs.make("MountainCar-v0")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
-memory = deque(maxlen=10000)
-n_episode = 50
+memory = deque(maxlen=100000)
+n_episode = 500
 replay_size = 32
 
-ORFparams = {'minSamples': replay_size*2, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -155,7 +155,7 @@ total_reward_episode = [0] * n_episode
 
 ep = {i: [] for i in range(n_episode)}
 
-QLparams = {'gamma' : 1.0, 'epsilon' : 0.5, 'epsilon_decay' : 0.99}
+QLparams = {'gamma' : 1.0, 'epsilon' : 1, 'epsilon_decay' : 0.99}
 
 
 # In[5]:
