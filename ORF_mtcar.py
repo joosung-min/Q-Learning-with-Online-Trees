@@ -113,8 +113,20 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
             
             # Modified rewards for mtcar depending on its location 
             # assign larger reward for being close to the right side
-
+            
             modified_reward = next_state[0] + 0.5
+            if next_state[0] < 0 and next_state[1] == 0 and action == 2:
+                modified_reward += 200
+            
+            if next_state[0] > 0 and next_state[1] == 0 and action == 0:
+                modified_reward += 200           
+            
+            if next_state[0] < 0 and next_state[1] < 0 and action == 0:
+                modified_reward +=20
+
+            if next_state[0] > 0 and next_state[1] > 0 and action == 2:
+                modified_reward += 20
+
             if next_state[0] >= 0.5: 
                 modified_reward += 100 
             elif next_state[0] >= 0.25:
@@ -179,7 +191,7 @@ print("max reward = ", max(total_reward_episode))
 # In[27]:
 
 
-backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_1"
+backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_2"
 img_file = backup_file_name + ".jpg"
 plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
@@ -189,8 +201,15 @@ plt.hlines(195, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
 plt.show()
 plt.savefig(fname = img_file)
 
+myEnv = dict()
+myEnv["ep"] = ep
+myEnv["ORFparams"] = ORFparams
+myEnv["QLparams"] = QLparams
+myEnv["tre"] = total_reward_episode
 
-# In[ ]:
+backup_file_p = "mtcar_extraModifiedRewards_2.p"
+with open(backup_file_p, "wb") as file:
+    pickle.dump(myEnv, file)
 
 
 

@@ -1,0 +1,8 @@
+running build_ext
+  0%|          | 0/500 [00:00<?, ?it/s]  0%|          | 0/500 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "ORF_mtcar.py", line 180, in <module>
+    q_learning(env, dqn, n_episode, replay_size, gamma=QLparams['gamma'], epsilon=QLparams['epsilon'], epsilon_decay=QLparams['epsilon_decay']) # runs the alg
+  File "ORF_mtcar.py", line 140, in q_learning
+    memory.append((state, action, next_state, modified_reward, is_done))
+UnboundLocalError: local variable 'modified_reward' referenced before assignment
