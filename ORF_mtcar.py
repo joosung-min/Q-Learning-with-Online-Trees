@@ -115,17 +115,17 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
             # assign larger reward for being close to the right side
             
             modified_reward = next_state[0] + 0.5
-            if next_state[0] < 0 and next_state[1] == 0 and action == 2:
-                modified_reward += 400
+            #if next_state[0] < 0 and next_state[1] == 0 and action == 2:
+            #    modified_reward += 400
             
-            if next_state[0] > 0 and next_state[1] == 0 and action == 0:
-                modified_reward += 400           
+            #if next_state[0] > 0 and next_state[1] == 0 and action == 0:
+            #    modified_reward += 400           
             
             if next_state[0] < 0 and next_state[1] < 0 and action == 0:
-                modified_reward +=200
+                modified_reward +=1000
 
             if next_state[0] > 0 and next_state[1] > 0 and action == 2:
-                modified_reward += 200
+                modified_reward += 1000
 
             if next_state[0] >= 0.5: 
                 modified_reward += 400 
