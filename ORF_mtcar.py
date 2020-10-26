@@ -155,8 +155,8 @@ env = gym.envs.make("MountainCar-v0")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
-memory = deque(maxlen=100000)
-n_episode = 500
+memory = deque(maxlen=1000)
+n_episode = 1500
 replay_size = 32
 
 ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
@@ -197,7 +197,7 @@ plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
 plt.xlabel("Episode")
 plt.ylabel("Total reward")
-plt.hlines(195, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
+plt.hlines(-110, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
 plt.show()
 plt.savefig(fname = img_file)
 
