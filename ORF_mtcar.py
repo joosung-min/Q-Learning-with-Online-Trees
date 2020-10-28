@@ -155,11 +155,11 @@ env = gym.envs.make("MountainCar-v0")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
-memory = deque(maxlen=1000)
+memory = deque(maxlen=10000)
 n_episode = 1500
 replay_size = 32
 
-ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 15, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 30, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -191,7 +191,7 @@ print("max reward = ", max(total_reward_episode))
 # In[27]:
 
 
-backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_3"
+backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_4"
 img_file = backup_file_name + ".jpg"
 plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
@@ -207,7 +207,7 @@ myEnv["ORFparams"] = ORFparams
 myEnv["QLparams"] = QLparams
 myEnv["tre"] = total_reward_episode
 
-backup_file_p = "mtcar_extraModifiedRewards_3.p"
+backup_file_p = "mtcar_extraModifiedRewards_4.p"
 with open(backup_file_p, "wb") as file:
     pickle.dump(myEnv, file)
 
