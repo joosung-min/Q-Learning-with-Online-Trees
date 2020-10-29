@@ -156,13 +156,14 @@ n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
 memory = deque(maxlen=10000)
-n_episode = 1500
+n_episode = 2000
 replay_size = 32
 
-ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 50, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 70, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
 # mtcar extraMR_4: memory = 10000, minSamples = replay_size*5, maxDepth = 30
 # mtcar extraMR_5: memory = 10000, minSamples = replay_size*5, maxDepth = 50
 # mtcar extraMR_6: memory = 10000, minsamples = replay_size*5, maxDepth = 70, modified rewards editied
+# mtcar extraMR_7: memory = 10000, minSamples = replay_size*10, maxDepth=70, epsilon_decay=0.998
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -170,7 +171,7 @@ total_reward_episode = [0] * n_episode
 
 ep = {i: [] for i in range(n_episode)}
 
-QLparams = {'gamma' : 1.0, 'epsilon' : 1, 'epsilon_decay' : 0.99}
+QLparams = {'gamma' : 1.0, 'epsilon' : 1, 'epsilon_decay' : 0.998}
 
 
 # In[5]:
@@ -194,7 +195,7 @@ print("max reward = ", max(total_reward_episode))
 # In[27]:
 
 
-backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_6"
+backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_7"
 img_file = backup_file_name + ".jpg"
 plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
@@ -210,7 +211,7 @@ myEnv["ORFparams"] = ORFparams
 myEnv["QLparams"] = QLparams
 myEnv["tre"] = total_reward_episode
 
-backup_file_p = "mtcar_extraModifiedRewards_6.p"
+backup_file_p = "mtcar_extraModifiedRewards_7.p"
 with open(backup_file_p, "wb") as file:
     pickle.dump(myEnv, file)
 
