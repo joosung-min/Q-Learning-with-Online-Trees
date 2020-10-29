@@ -128,13 +128,13 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
                 modified_reward += 1000
 
             if next_state[0] >= 0.5: 
-                modified_reward += 400 
+                modified_reward += 1000 
             elif next_state[0] >= 0.25:
-                modified_reward += 100
+                modified_reward += 500
             elif next_state[0] >= 0.1:
-                modified_reward += 50
+                modified_reward += 250
             elif next_state[0] >= 0:
-                modified_reward += 20
+                modified_reward += 100
 
             ep[episode].append((i, state, ran, action))
             memory.append((state, action, next_state, modified_reward, is_done))
@@ -162,7 +162,7 @@ replay_size = 32
 ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 50, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
 # mtcar extraMR_4: memory = 10000, minSamples = replay_size*5, maxDepth = 30
 # mtcar extraMR_5: memory = 10000, minSamples = replay_size*5, maxDepth = 50
-
+# mtcar extraMR_6: memory = 10000, minsamples = replay_size*5, maxDepth = 70, modified rewards editied
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -194,7 +194,7 @@ print("max reward = ", max(total_reward_episode))
 # In[27]:
 
 
-backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_5"
+backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_6"
 img_file = backup_file_name + ".jpg"
 plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
@@ -210,7 +210,7 @@ myEnv["ORFparams"] = ORFparams
 myEnv["QLparams"] = QLparams
 myEnv["tre"] = total_reward_episode
 
-backup_file_p = "mtcar_extraModifiedRewards_5.p"
+backup_file_p = "mtcar_extraModifiedRewards_6.p"
 with open(backup_file_p, "wb") as file:
     pickle.dump(myEnv, file)
 
