@@ -163,7 +163,8 @@ ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDept
 # mtcar extraMR_4: memory = 10000, minSamples = replay_size*5, maxDepth = 30
 # mtcar extraMR_5: memory = 10000, minSamples = replay_size*5, maxDepth = 50
 # mtcar extraMR_6: memory = 10000, minsamples = replay_size*5, maxDepth = 70, modified rewards editied
-# mtcar extraMR_7: memory = 10000, minSamples = replay_size*10, maxDepth=70, epsilon_decay=0.998
+# mtcar extraMR_7: memory = 10000, minSamples = replay_size*10, maxDepth=70, epsilon_decay=0.998 --> not good!
+# mtcar extraMSR_8: same as 7 but replay_size*5, epsilon decay=0.995
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -171,7 +172,7 @@ total_reward_episode = [0] * n_episode
 
 ep = {i: [] for i in range(n_episode)}
 
-QLparams = {'gamma' : 1.0, 'epsilon' : 1, 'epsilon_decay' : 0.998}
+QLparams = {'gamma' : 1.0, 'epsilon' : 1, 'epsilon_decay' : 0.995}
 
 
 # In[5]:
@@ -195,7 +196,7 @@ print("max reward = ", max(total_reward_episode))
 # In[27]:
 
 
-backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_7"
+backup_file_name = "ORF_MountainCar_" + time.strftime("%y%m%d") + "_extraMR_8"
 img_file = backup_file_name + ".jpg"
 plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
@@ -211,7 +212,7 @@ myEnv["ORFparams"] = ORFparams
 myEnv["QLparams"] = QLparams
 myEnv["tre"] = total_reward_episode
 
-backup_file_p = "mtcar_extraModifiedRewards_7.p"
+backup_file_p = "mtcar_extraModifiedRewards_8.p"
 with open(backup_file_p, "wb") as file:
     pickle.dump(myEnv, file)
 
