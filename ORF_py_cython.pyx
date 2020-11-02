@@ -476,7 +476,9 @@ class ORF:
                 idx.append(i)
         
         # Temporal knowledge weighting:
-        d = max([1, int(len(self.forest)/6)]) # d = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
+        # d = max([1, int(len(self.forest)/6)]) 
+        d = 1
+        # d = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
         
         if len(idx) > d:
             randomIdx = random.sample(idx, k=d) # randomly choose trees older than 1/gamma
