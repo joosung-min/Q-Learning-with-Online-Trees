@@ -1,5 +1,3 @@
-import gym
-import random
 import pickle
 from collections import deque
 from tqdm import tqdm
@@ -13,6 +11,9 @@ import datetime
 import sys
 # import multiprocessing
 # from cProfile import Profile
+
+
+# In[3]:
 
 
 # # On Google Colab
@@ -43,23 +44,22 @@ import sys
 # !cython -a DQN.pyx
 # %cd /content/drive/My\ Drive/ShallowQlearning/
 # !python setup_ORF.py build_ext --inplace
-import ORF_cython as ORF
+import ORF_py_cython as ORF
 
 
 # In[9]:
 
 
 # Initialization
-# env = gym.envs.make("LunarLander-v2")
+env = gym.envs.make("LunarLander-v2")
 # env=gym.envs.make("CartPole-v1")
-env = gym.envs.make("MountainCar-v0")
 n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
-memory = deque(maxlen=100000)
-n_episode = 600
+memory = deque(maxlen=10000)
+n_episode = 2000
 replay_size = 32
 
-ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 50, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
+ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 70, 'numTrees': 5, 'maxTrees': 30} # numTrees -> 30 after 100 iters. 25 restarts
 
 dqn = ORF.ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -94,7 +94,7 @@ print("max reward = ", max(total_reward_episode))
 
 
 # backup_file_name = "ORF_LunarLander_" + time.strftime("%y%m%d") + "_1"
-backup_file_name = time.strftime("%y%m%d") + "MountainCar_iter1"
+backup_file_name = "ORF_LunarLander_" + time.strftime("%y%m%d") + "_iter2"
 img_file = backup_file_name + ".jpg"
 plt.plot(result)
 plt.title("(ORF) Total reward per episode")
@@ -127,11 +127,66 @@ with open(backup_file, "wb") as file:
 # In[ ]:
 
 
-# About MountainCar
-# Actions: discrete(3) 0:left, 1:no push, 2: push right
-# Reward: -1 for each time step, until the goal position of 0.5 is reached.
-# Starting state: Random position from -0.6 to 0.4 with no velocity
-# Episode termination: ends when the car reaches 0.5 position, or if 200 iterations are reached.
-# Solve requirement: get average reward of -110.0 over 100 consecutive trials.
+# About Cartpole
+    """
+    Description:
+        A pole is attached by an un-actuated joint to a cart, which moves along
+        a frictionless track. The pendulum starts upright, and the goal is to
+        prevent it from falling over by increasing and reducing the cart's
+        velocity.
+    
+    Source:
+        This environment corresponds to the version of the cart-pole problem
+        described by Barto, Sutton, and Anderson
+    
+    Observation:
+        Type: Box(4)
+        Num     Observation               Min                     Max
+        0       Cart Position             -4.8                    4.8
+        1       Cart Velocity             -Inf                    Inf
+        2       Pole Angle                -0.418 rad (-24 deg)    0.418 rad (24 deg)
+        3       Pole Angular Velocity     -Inf                    Inf
+    
+    Actions:
+        Type: Discrete(2)
+        Num   Action
+        0     Push cart to the left
+        1     Push cart to the right
+        Note: The amount the velocity that is reduced or increased is not
+        fixed; it depends on the angle the pole is pointing. This is because
+        the center of gravity of the pole increases the amount of energy needed
+        to move the cart underneath it
+    
+    Reward:
+        Reward is 1 for every step taken, including the termination step
+    
+    Starting State:
+        All observations are assigned a uniform random value in [-0.05..0.05]
+    
+    Episode Termination:
+        Pole Angle is more than 12 degrees.
+        Cart Position is more than 2.4 (center of the cart reaches the edge of
+        the display).
+        Episode length is greater than 200.
+    
+    Solved Requirements:
+        Considered solved when the average return is greater than or equal to
+        195.0 over 100 consecutive trials.
+    """
+
+
+# In[ ]:
+
+
+# import pstats
+# stats = pstats.Stats("profile_200913.pfl")
+# stats.strip_dirs()
+# stats.sort_stats('cumulative')
+# stats.print_stats()
+
+
+# In[ ]:
+
+
 
 
