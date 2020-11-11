@@ -1,4 +1,3 @@
-# %% [markdown]
 # **Changes**
 # 
 # * 2020-08-17:
@@ -9,21 +8,12 @@
 #     * Replaced 'xrange' with 'range'
 #     * Replaced '.has_key()' with 'if _ in .keys()'
 
-# %%
-import numpy as np
 import sys
 import random
-import math
+from math import exp, log
 import unittest
-from numba import jit
-from numba import int32, float32
-# from tqdm import tqdm
-# from collections import deque
-# import os
-# import multiprocessing
-# from concurrent.futures import ProcessPoolExecutor
+from utils import mean, sd, argmax, log2
 
-# %%
 ncores = 4
 # pool = multiprocessing.Pool(processes=ncores)
 # pool = ProcessPoolExecutor(max_workers=ncores)
@@ -41,11 +31,9 @@ def dataRange(X):
         # return list(map(lambda x: x[j], X))
 
     k = len(X[0]) # number of columns in X
-    return [[np.min(col(j)), np.max(col(j))] for j in range(k)]
+    return [[min(col(j)), max(col(j))] for j in range(k)]
     # return list(map(lambda j: [ min(col(j)), max(col(j)) ], range(k)))
 
-
-# %%
 class Tree: # Node object
     """
     # Tree - Binary tree class
@@ -101,7 +89,6 @@ class Tree: # Node object
         """
         returns a boolean. True if the Tree has no children, False otherwise
         """
-        # return _isLeaf(self.left, self.right)
         return self.left == None and self.right == None
 
     def size(self):
@@ -125,67 +112,55 @@ class Tree: # Node object
     def __md(self,s):
         return s if self.isLeaf() else max(self.left.__md(s+1),self.right.__md(s+1))
 
-    # def inOrder(self):
-    #     """
-    #     Returns the in-order sequence of tree. Needs to be implemented...
-    #     """
-    #     print("return in-order sequence of tree. needs to be implemented") # FIXME
-    #     pass
+    def inOrder(self):
+        """
+        Returns the in-order sequence of tree. Needs to be implemented...
+        """
+        print("return in-order sequence of tree. needs to be implemented") # FIXME
+        pass
 
-    # def preOrder(self):
-    #     """
-    #     Returns the pre-order sequence of tree. Needs to be implemented...
-    #     """
-    #     print("return pre-order sequence of tree. needs to be implemented") # FIXME
-    #     pass
+    def preOrder(self):
+        """
+        Returns the pre-order sequence of tree. Needs to be implemented...
+        """
+        print("return pre-order sequence of tree. needs to be implemented") # FIXME
+        pass
 
-    # def draw(self):
-    #     """
-    #     Draw the tree in a pretty way in the console. Good for smaller trees. You probably don't want to draw a very large tree...
-    #     """
-    #     print(self.treeString())
+    def draw(self):
+        """
+        Draw the tree in a pretty way in the console. Good for smaller trees. You probably don't want to draw a very large tree...
+        """
+        print(self.treeString())
 
-    # def treeString(self,fun=False):
-    #     """
-    #     Returns a string representing the flattened tree
-    #     """
-    #     if fun:
-    #         return "Leaf(" + self.elem.toString() + ")" if self.isLeaf() else "\n" + "\n".join( self.__pretty(spacing=1,fun=fun) ) + "\n"
-    #     else:
-    #         return "Leaf(" + str(self.elem) + ")" if self.isLeaf() else "\n" + "\n".join( self.__pretty(spacing=1,fun=fun) ) + "\n"
+    def treeString(self,fun=False):
+        """
+        Returns a string representing the flattened tree
+        """
+        if fun:
+            return "Leaf(" + self.elem.toString() + ")" if self.isLeaf() else "\n" + "\n".join( self.__pretty(spacing=1,fun=fun) ) + "\n"
+        else:
+            return "Leaf(" + str(self.elem) + ")" if self.isLeaf() else "\n" + "\n".join( self.__pretty(spacing=1,fun=fun) ) + "\n"
 
-    # def __pretty(self,spacing=3,fun=False):
-    #     def paste(l, r): # l,r: string lists
-    #         def elongate(ls):
-    #             maxCol = np.max(list(map(len,ls)))
-    #             return list(map(lambda  s: s + " "*(maxCol - len(s)) , ls))
+    def __pretty(self,spacing=3,fun=False):
+        def paste(l, r): # l,r: string lists
+            def elongate(ls):
+                maxCol = max(list(map(len,ls)))
+                return list(map(lambda  s: s + " "*(maxCol - len(s)) , ls))
 
-    #         maxRow = np.max(list(map(len, [l,r]) ))
-    #         tmp = list(map(lambda x: x + [""]*(maxRow-len(x)), [l,r]))
-    #         # newL,newR = map(elongate,tmp)
-    #         newL, newR = elongate(tmp)
-    #         return [newL[i] + newR[i] for i in range(maxRow)]
+            maxRow = max(list(map(len, [l,r]) ))
+            tmp = list(map(lambda x: x + [""]*(maxRow-len(x)), [l,r]))
+            # newL,newR = map(elongate,tmp)
+            newL, newR = elongate(tmp)
+            return [newL[i] + newR[i] for i in range(maxRow)]
 
-    #     ps = self.elem.toString() if fun else str(self.elem)
-    #     ls,rs = list(map(lambda x: [x.elem.toString() if fun else str(x.elem)] if x.isLeaf() else x.__pretty(spacing,fun), (self.left,self.right)))
-    #     posL = ls[0].index(self.left.elem.toString() if fun else str(self.left.elem))
-    #     posR = rs[0].index(self.right.elem.toString() if fun else str(self.right.elem))
-    #     top = " "*posL + "_"*(spacing+len(ls[0])-posL) + ps + "_"*(spacing+posR) + " "*(len(rs[0])-posR)
-    #     bottom = paste(ls, paste([" "*(spacing+len(ps))],rs)) # use reduce?
-    #     return [top] + bottom
+        ps = self.elem.toString() if fun else str(self.elem)
+        ls,rs = list(map(lambda x: [x.elem.toString() if fun else str(x.elem)] if x.isLeaf() else x.__pretty(spacing,fun), (self.left,self.right)))
+        posL = ls[0].index(self.left.elem.toString() if fun else str(self.left.elem))
+        posR = rs[0].index(self.right.elem.toString() if fun else str(self.right.elem))
+        top = " "*posL + "_"*(spacing+len(ls[0])-posL) + ps + "_"*(spacing+posR) + " "*(len(rs[0])-posR)
+        bottom = paste(ls, paste([" "*(spacing+len(ps))],rs)) # use reduce?
+        return [top] + bottom
 
-
-# %%
-
-# @jit(cache=True)
-# def _findLeaf(x, tree, depth=0):
-#     while True:
-#         if tree.isLeaf():
-#             return(tree, depth)
-#         else:
-#             (dim, loc) = tree.elem.split()
-#             tree = tree.left if x[dim] < loc else tree.right
-#             depth += 1
 
 class ORT: # Tree object
     """
@@ -237,6 +212,14 @@ class ORT: # Tree object
         """
         print(self.tree.treeString(fun=True))
 
+
+    def __poisson(self,lam=1): # fix lamda = 1
+      l = exp(-lam)
+      def loop(k,p):
+          return loop(k+1, p * random.random()) if (p > l) else k - 1
+      return loop(0,1)
+
+
     def update(self,x,y):
         """
         updates the ORT
@@ -248,11 +231,12 @@ class ORT: # Tree object
 
         ort.update(x,y)
         """
-        # k = self.__poisson(1) # draw a random poisson
         
-        k = np.random.poisson(lam=1)
+        k = self.__poisson(1) # draw a random poisson
+        
+        # k = np.random.poisson(lam=1)
         if k == 0:
-            self.OOBError = np.abs(y-self.predict(x)) / y # for regression
+            self.OOBError = abs(y-self.predict(x)) / y # for regression
         else:
             for _ in range(k):
                 self.age += 1
@@ -262,9 +246,9 @@ class ORT: # Tree object
                 if j.elem.stats.n > self.minSamples and depth < self.maxDepth:
                     g = self.__gains(j.elem)
                     # print("this is g : ", g)
-                    if any(g >= self.minGain):
-                    # if any([ gg >= self.minGain for gg in g ]):
-                        bestTest = j.elem.tests[np.argmax(g)]
+                    # if any(g >= self.minGain):
+                    if any([ gg >= self.minGain for gg in g ]):
+                        bestTest = j.elem.tests[argmax(g)]
                         j.elem.updateSplit(bestTest.dim,bestTest.loc)
                         j.updateChildren( Tree(Elem(self.param)), Tree(Elem(self.param)) )
                         j.left.elem.stats = bestTest.statsL
@@ -294,10 +278,10 @@ class ORT: # Tree object
             lossR = 0 if nR==0 else statsR.impurity()
             g = elem.stats.impurity() - (nL/n) * lossL - (nR/n)  * lossR
             return 0 if g < 0 else g
-        return np.array([gain(test) for test in tests])
+        return [gain(test) for test in tests]
 
     def __findLeaf(self, x, tree, depth=0):
-
+        
         tr = tree    
         while True:
             if tr.isLeaf():
@@ -307,8 +291,20 @@ class ORT: # Tree object
                 tr = tr.left if x[dim] < loc else tr.right
                 depth += 1
         
+        # if tree.isLeaf(): 
+        #     return (tree,depth)
+        # else:
+        #     (dim,loc) = tree.elem.split()
+        #     return self.__findLeaf(x, tree.left, depth+1) if x[dim] < loc else self.__findLeaf(x,tree.right,depth+1)
 
         
+
+
+            # if x[dim] < loc:
+            #     return self.__findLeaf(x,tree.left,depth+1)
+            # else:
+            #     return self.__findLeaf(x,tree.right,depth+1)
+
 class SuffStats:
     def __init__(self,numClasses=0,sm=0.0,ss=0.0):
         self.n = 0
@@ -353,7 +349,7 @@ class SuffStats:
         #     self.ss = None
 
     def pred(self): # gives predictions
-        return self.sum / (self.n+self.eps) if self.__classify == False else np.argmax(self.counts)        
+        return self.sum / (self.n+self.eps) if self.__classify == False else argmax(self.counts)        
         
         # if self.__classify:
         #     return np.argmax(self.counts)
@@ -364,9 +360,9 @@ class SuffStats:
         n = self.n + self.eps
         if self.__classify == False: # if regression
             prd = self.pred()
-            return np.sqrt( self.ss/n - prd**2 ) # sd of node
+            return ( self.ss/n - prd**2 )**(1/2) # sd of node
         else: # if classification
-            return np.sum(list(map(lambda x: -x/n * np.log2(x/n + self.eps), self.counts))) # entropy
+            return sum(list(map(lambda x: -x/n * log2(x/n + self.eps), self.counts))) # entropy
 
         # if self.__classify:
         #     return np.sum(list(map(lambda x: -x/n * np.log2(x/n + self.eps), self.counts))) # entropy
@@ -428,36 +424,6 @@ class Elem: #HERE
         return (self.splitDim,self.splitLoc)
 
 
-# %%
-
-# def treeUpdate(argslist):
-#     ForestObject, x, y,  = argslist
-#     for i in range(ForestObject.numTrees):
-#         ForestObject[i].update(x, y)
-    
-#     if self.forest[i].age > 1/self.gamma:
-#         self.a_idx.append(i)
-
-# @jit(cache=True)
-# def _forestUpdate(params, x, y, xrng):
-#     forest, gamma, param = params
-#     idx = []
-#     for i, tree in enumerate(forest):
-#         tree.update(x, y)
-#         if tree.age > 1/gamma:
-#             idx.append(i)
-    
-#     d = np.max([1, int(len(forest)/6)])
-
-#     if len(idx) > d:
-#         randomIdx = np.random.choice(idx, size=d, replace=False)
-#         OOBErrors = [forest[i].OOBError for i in randomIdx]
-#         rr = np.random.uniform(0,1, size=len(OOBErrors))
-#         didx = [i for i,e,r in zip(randomIdx, OOBErrors, rr) if e > r]
-#         param["xrng"] = xrng
-#         for i in didx:
-#             forest[i] = ORT(param)
-
 class ORF:
     def __init__(self,param,numTrees=100,ncores=0):
         """
@@ -500,9 +466,7 @@ class ORF:
         """
         updates the random forest by updating each tree in the forest. As mentioned above, this is currently not implemented. Please replace 'pass' (below) by the appropriate implementation.
         """
-        # params = [self.forest, self.gamma, self.param]
-        # _forestUpdate(params, x, y, xrng)
-
+        
         # sequential updates    
         idx = [] # idx of trees with age > 1/gamma
         for i, tree in enumerate(self.forest):
@@ -511,13 +475,13 @@ class ORF:
                 idx.append(i)
         
         # Temporal knowledge weighting:
-        d = np.max([1, int(len(self.forest)/6)]) # d = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
+        d = max([1, int(len(self.forest)/6)]) # d = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
         
         if len(idx) > d:
-            randomIdx = np.random.choice(idx, size=d, replace=False) # randomly choose trees older than 1/gamma
+            randomIdx = random.sample(idx, k=d) # randomly choose trees older than 1/gamma
             OOBErrors = [self.forest[i].OOBError for i in randomIdx]
             
-            rr = np.random.uniform(0,1, size=len(OOBErrors)) # independently draw uniform
+            rr = [random.uniform(0,1) for _ in range(len(OOBErrors))] # independently draw uniform
             didx = [i for i, e, r in zip(randomIdx, OOBErrors, rr) if e > r]
             self.param["xrng"] = xrng
             for i in didx:
@@ -536,13 +500,13 @@ class ORF:
         preds = [tree.predict(x) for tree in self.forest]
         
         if self.classify == 0: # if regression
-            return np.sum(preds) / (len(preds)*1.0)
+            return sum(preds) / (len(preds)*1.0)
         
         else: # if classification
             cls_counts = [0] * self.param['numClasses']
             for p in preds:
                 cls_counts[p] += 1
-            return np.argmax(cls_counts)
+            return argmax(cls_counts)
         
         
         # if self.classify: # if classification
@@ -585,22 +549,22 @@ class ORF:
 
         Same idea for next 5 methods (for mean and std. dev.)
         """
-        return np.mean(list(map(lambda ort: ort.tree.size(), self.forest)))
+        return mean(list(map(lambda ort: ort.tree.size(), self.forest)))
 
     def meanNumLeaves(self):
-        return np.mean(list(map(lambda ort: ort.tree.numLeaves(), self.forest)))
+        return mean(list(map(lambda ort: ort.tree.numLeaves(), self.forest)))
 
     def meanMaxDepth(self):
-        return np.mean(list(map(lambda ort: ort.tree.maxDepth(), self.forest)))
+        return mean(list(map(lambda ort: ort.tree.maxDepth(), self.forest)))
 
     def sdTreeSize(self):
-        return np.std([ort.tree.size() for ort in self.forest])
+        return sd([ort.tree.size() for ort in self.forest])
 
     def sdNumLEaves(self):
-        return np.std([ort.tree.numLeaves() for ort in self.forest])
+        return sd([ort.tree.numLeaves() for ort in self.forest])
 
     def sdMaxDepth(self):
-        return np.std([ort.tree.maxDepth() for ort in self.forest])
+        return sd([ort.tree.maxDepth() for ort in self.forest])
     
     def confusion(self,xs,ys):
         """
@@ -631,14 +595,3 @@ class ORF:
         for row in conf:
             print(str(i) + "\t" + "\t".join(map(str,row)))
             i += 1
-
-# Other functions:
-def mean(xs):
-    return np.sum(xs) / (len(xs)*1.0)
-
-def sd(xs): 
-    n = len(xs) *1.0
-    mu = np.sum(xs) / n
-    return np.sqrt( sum(list(map(lambda x: (x-mu)*(x-mu),xs))) / (n-1) )
-
-# %%
