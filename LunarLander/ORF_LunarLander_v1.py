@@ -70,7 +70,7 @@ class ORF_DQN:
             for state, action, next_state, reward, is_done in replay_data:
                 
                 q_values = self.predict(state) # (, n_actions)
-                q_values[action] = reward + gamma * max(self.predict(next_state)) if is_done == False else -100*reward
+                q_values[action] = reward + gamma * max(self.predict(next_state)) if is_done == False else reward
                 
                 # Update the RF for the action taken
                 xrng = ORF.dataRange([v[0] for v in replay_data if v[1] == action])
@@ -83,7 +83,8 @@ class ORF_DQN:
                 self.a_params[a]['xrng'] = ORF.dataRange([v[0] for v in memory if v[1] == a])
                 lenFor = len(self.a_model[a].forest)
                 for i in range(lenFor+1, self.maxTrees):
-                    self.a_model[a].forest[i] = ORF.ORT(self.a_params[a]) # build new empty trees
+                    # self.a_model[a].forest[i] = ORF.ORT(self.a_params[a]) # build new empty trees
+                    self.a_model[a].forest[i] = ORF.ORF.best_tree
 
 def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, epsilon_decay=0.95):
     
