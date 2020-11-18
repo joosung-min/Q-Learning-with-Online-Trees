@@ -14,6 +14,12 @@ def argmax(x):
     """
     return x.index(max(x))
 
+def argmin(x):
+    """
+    returns the index of the element is a list which corresponds to the maximum
+    """
+    return x.index(min(x))
+
 def log2(x):
     """
     log base 2

@@ -1,4 +1,3 @@
-#cython: language_level=3, boundscheck=False, wraparound=False
 # **Changes**
 # 
 # * 2020-08-17:
@@ -13,7 +12,8 @@ import sys
 import random
 from math import exp, log
 import unittest
-from utils import mean, sd, argmax, log2
+from utils import mean, sd, argmax, log2, argmin
+# from multiprocessing import Process, Array
 
 ncores = 4
 # pool = multiprocessing.Pool(processes=ncores)
@@ -237,7 +237,7 @@ class ORT: # Tree object
         
         # k = np.random.poisson(lam=1)
         if k == 0:
-            self.OOBError = abs(y-self.predict(x)) / y # for regression
+            self.OOBError = abs(y-self.predict(x)) / (y+0.0001) # for regression
         else:
             for _ in range(k):
                 self.age += 1
@@ -461,11 +461,21 @@ class ORF:
         self.forest = [ORT(param) for _ in range(numTrees)]
         self.ncores = 4
         self.gamma = 0.05
+        # self.idx = []
+        self.best_tree = 0
         # self.a_idx = []
 
+    # def u_func(self, x, y, xrng, inds):
+    #     self.idx = []
+    #     for i, tree in enumerate(self.forest):
+    #         tree.update(x, y)
+    #         if tree.age > 1/self.gamma:
+    #             self.idx.append(i)
+        
     def update(self,x,y, xrng):
         """
-        updates the random forest by updating each tree in the forest. As mentioned above, this is currently not implemented. Please replace 'pass' (below) by the appropriate implementation.
+        updates the random forest by updating each tree in the forest. As mentioned above, this is currently not implemented. 
+        Please replace 'pass' (below) by the appropriate implementation.
         """
         
         # sequential updates    
@@ -475,20 +485,28 @@ class ORF:
             if tree.age > 1/self.gamma:
                 idx.append(i)
         
-        # Temporal knowledge weighting:
-        # d = max([1, int(len(self.forest)/6)]) 
-        d = 1
-        # d = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
+        # inds = Array('i', range(len(self.forest)))
+        # p = Process(target= self.u_func, args=(x, y, xrng, inds))
+        # p.start()
+        # p.join()
         
+        
+        # Temporal knowledge weighting:
+        # d = max([1, int(len(self.forest)/6)]) # d = int(len(self.forest)/6) showed some promising results in ORF_CartPole (200907)
+        d = 1
         if len(idx) > d:
             randomIdx = random.sample(idx, k=d) # randomly choose trees older than 1/gamma
             OOBErrors = [self.forest[i].OOBError for i in randomIdx]
             
+            self.best_tree = self.forest[argmin(OOBErrors)]
+
             rr = [random.uniform(0,1) for _ in range(len(OOBErrors))] # independently draw uniform
             didx = [i for i, e, r in zip(randomIdx, OOBErrors, rr) if e > r]
             self.param["xrng"] = xrng
+            
             for i in didx:
-                self.forest[i] = ORT(self.param) # discard the tree and construct a new tree                                      
+                self.forest[i] = ORT(self.param) # discard the tree and construct a new tree
+
                 
 
     def predict(self,x):
