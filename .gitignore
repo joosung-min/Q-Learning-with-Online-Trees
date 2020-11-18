@@ -9,3 +9,5 @@ core.12444
 /LunarLander/slurm*
 /MountainCar/__pycache__
 /MountainCar/slurm*
+.python-version
+/Blackjack/__pycache__
