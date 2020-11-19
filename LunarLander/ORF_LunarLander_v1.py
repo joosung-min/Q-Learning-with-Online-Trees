@@ -7,7 +7,7 @@ import pickle
 from collections import deque
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from utils import mean, argmax
+from utils import mean, argmax, argmin
 import time
 import datetime
 
@@ -84,7 +84,8 @@ class ORF_DQN:
                 lenFor = len(self.a_model[a].forest)
                 for i in range(lenFor+1, self.maxTrees):
                     # self.a_model[a].forest[i] = ORF.ORT(self.a_params[a]) # build new empty trees
-                    self.a_model[a].forest[i] = ORF.ORF.best_tree
+                    best_tree_idx = argmin([ORF.ORF.forest[j].OOBError for j in range(len(ORF.ORF.forest))])
+                    self.a_model[a].forest[i] = ORF.ORF.forest[best_tree_idx] # duplicate the best tree
 
 def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, epsilon_decay=0.95):
     
