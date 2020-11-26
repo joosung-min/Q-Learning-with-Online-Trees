@@ -117,7 +117,7 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
                 break
             estimator.replay(memory, replay_size, gamma, episode)
             state = next_state
-        epsilon = max([epsilon * epsilon_decay, 0.01])
+        epsilon = max([epsilon * epsilon_decay, 0.001])
         # print(epsilon)
 
 
@@ -131,6 +131,9 @@ n_episode = 2000
 replay_size = 32
 
 ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 70, 'numTrees': 5, 'maxTrees': 50} # numTrees -> 30 after 100 iters. 25 restarts
+# lunar noMR 3: memory=5000, minSamples replay_size*5, minGain=0.2, maxDepth=70, epsilon_decay=0.99
+
+backup_file_name = "lunar_noModifiedReward" + "_3"
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -138,7 +141,7 @@ total_reward_episode = [0] * n_episode
 
 ep = {i: [] for i in range(n_episode)}
 
-QLparams = {'gamma' : 1.0, 'epsilon' : 1, 'epsilon_decay' : 0.995}
+QLparams = {'gamma' : 1.0, 'epsilon' : 1.0, 'epsilon_decay' : 0.99}
 
 
 
@@ -160,7 +163,6 @@ print("max reward = ", max(total_reward_episode))
 # In[27]:
 
 
-backup_file_name = "lunar_noModifiedReward" + time.strftime("%y%m%d") + "_1"
 img_file = backup_file_name + ".jpg"
 backup_file_p = backup_file_name + ".p"
 
