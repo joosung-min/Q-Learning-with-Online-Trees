@@ -179,7 +179,7 @@ plt.plot(total_reward_episode)
 plt.title("(ORF) Total reward per episode")
 plt.xlabel("Episode")
 plt.ylabel("Total reward")
-plt.hlines(-110, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
+plt.hlines(200, xmin=0, xmax=n_episode, linestyles="dotted", colors="gray")
 plt.show()
 plt.savefig(fname = img_file)
 
