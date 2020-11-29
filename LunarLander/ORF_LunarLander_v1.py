@@ -13,6 +13,7 @@ import datetime
 
 
 import ORF_py_cython as ORF
+# import ORF_py as ORF
 
 
 class ORF_DQN: 
@@ -108,10 +109,26 @@ def q_learning(env, estimator, n_episode, replay_size, gamma=1.0, epsilon=0.1, e
             # assign larger reward for being close to the right side
             
             ## Modified rewards for lunarlander?
+            modified_reward = reward
+            
+            if -0.05 < next_state[1] < 0.05: 
+                modified_reward = 500
+                if -0.05 < next_state[3] < 0.05: # modified reward for y
+                    modified_reward = 1000
+            
+            if -0.05 < next_state[0] < 0.05: # modified reward for x coord
+                modified_reward = 500
+                if -0.05 < next_state[2] < 0.05: # modified reward for x velocity
+                    modified_reward = 1000
 
-            ep[episode].append((i, state, ran, action))
-            # memory.append((state, action, next_state, modified_reward, is_done))
-            memory.append((state, action, next_state, reward, is_done))
+            if reward == 100: # modified reward for land / crash
+                modified_reward = 10000
+            elif reward == -100:
+                modified_reward = -10000
+
+            ep[episode].append((i, state, ran, action, reward))
+            memory.append((state, action, next_state, modified_reward, is_done))
+            # memory.append((state, action, next_state, reward, is_done))
             
             if is_done:
                 break
@@ -127,13 +144,15 @@ n_state = env.observation_space.shape[0]
 n_action = env.action_space.n
 
 memory = deque(maxlen=5000)
-n_episode = 2000
+n_episode = 1000
 replay_size = 32
 
-ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 70, 'numTrees': 5, 'maxTrees': 50} # numTrees -> 30 after 100 iters. 25 restarts
-# lunar noMR 3: memory=5000, minSamples replay_size*5, minGain=0.2, maxDepth=70, epsilon_decay=0.99
+ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDepth': 50, 'numTrees': 5, 'maxTrees': 50} 
+# default = memory = 10000, minSamples = replay_size*5, minGain = 0.01, maxDepth = 30
+# lunar noMR 3: memory=5000, minSamples replay_size*5, minGain=0.1, maxDepth=70, epsilon_decay=0.99
+# lunar MR 1: memory = 5000, minSamples = replay_size*10, minGain=0.1, maxDepth = 50
 
-backup_file_name = "lunar_noModifiedReward" + "_3"
+backup_file_name = "lunar_MR" + "_1"
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
@@ -185,6 +204,29 @@ plt.savefig(fname = img_file)
 
 
 
+# About LunarLander
+"""
+Rocket trajectory optimization is a classic topic in Optimal Control.
+According to Pontryagin's maximum principle it's optimal to fire engine full throttle or
+turn it off. That's the reason this environment is OK to have discreet actions (engine on or off).
+The landing pad is always at coordinates (0,0). The coordinates are the first two numbers in the state vector.
+Reward for moving from the top of the screen to the landing pad and zero speed is about 100..140 points.
+If the lander moves away from the landing pad it loses reward. The episode finishes if the lander crashes or
+comes to rest, receiving an additional -100 or +100 points. Each leg with ground contact is +10 points.
+Firing the main engine is -0.3 points each frame. Firing the side engine is -0.03 points each frame.
+Solved is 200 points.
+
+Landing outside the landing pad is possible. Fuel is infinite, so an agent can learn to fly and then land
+on its first attempt. Please see the source code for details.
+To see a heuristic landing, run:
+python gym/envs/box2d/lunar_lander.py
+To play yourself, run:
+python examples/agents/keyboard_agent.py LunarLander-v2
+Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
+
+observation_space = (x coord, y coord, x velocity, y velocity, lander angle, angular velocity, right-leg grounded, left-leg grounded)
+action_space = do nothing(0), fire left engine(1), fire mian engine(2), fire right engine(3)
+"""
 
 
 
