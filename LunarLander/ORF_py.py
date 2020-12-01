@@ -7,6 +7,8 @@
 #     * Replaced map(lambda x: ...) with list(map(lambda x: ...))
 #     * Replaced 'xrange' with 'range'
 #     * Replaced '.has_key()' with 'if _ in .keys()'
+# * 2020-12-01
+#     * Added xrgL and xrgR so that each of the children node receives its own xrng to create tests.
 
 import sys
 import random
@@ -241,7 +243,7 @@ class ORT: # Tree object
         else:
             for _ in range(k):
                 self.age += 1
-                (j,depth) = self.__findLeaf(x,self.tree)
+                (j,depth) = self.__findLeaf(x,self.tree) # find location of node j to update
                 j.elem.update(x,y)
                 #if j.elem.numSamplesSeen > self.minSamples and depth < self.maxDepth: # FIXME: which is the correct approach?
                 if j.elem.stats.n > self.minSamples and depth < self.maxDepth:
@@ -250,12 +252,16 @@ class ORT: # Tree object
                     # if any(g >= self.minGain):
                     if any([ gg >= self.minGain for gg in g ]):
                         bestTest = j.elem.tests[argmax(g)]
+                        paramL = self.param
+                        paramR = self.param
+                        paramL['xrng'] = j.elem.xrngL
+                        paramR['xrng'] = j.elem.xrngR
                         j.elem.updateSplit(bestTest.dim,bestTest.loc)
-                        j.updateChildren( Tree(Elem(self.param)), Tree(Elem(self.param)) )
+                        j.updateChildren( Tree(Elem(paramL)), Tree(Elem(paramR)) )
                         j.left.elem.stats = bestTest.statsL
                         j.right.elem.stats = bestTest.statsR
                         j.elem.reset()
-
+    #@profile
     def predict(self,x):
         """
         returns a scalar prediction based on input (x)
@@ -275,21 +281,22 @@ class ORT: # Tree object
             statsL, statsR = test.statsL,test.statsR
             nL,nR = statsL.n,statsR.n
             n = nL + nR + 1E-9
-            lossL = 0 if nL==0 else statsL.impurity()
-            lossR = 0 if nR==0 else statsR.impurity()
+            lossL = 0 if nL==0 else statsL.impurity() # sd in regression
+            lossR = 0 if nR==0 else statsR.impurity() # sd in regression
             g = elem.stats.impurity() - (nL/n) * lossL - (nR/n)  * lossR
             return 0 if g < 0 else g
         return [gain(test) for test in tests]
 
+    
     def __findLeaf(self, x, tree, depth=0):
         
-        tr = tree    
+        # tr = tree    
         while True:
-            if tr.isLeaf():
-                return (tr, depth)
+            if tree.isLeaf():
+                return (tree, depth)
             else:
-                (dim,loc) = tr.elem.split()
-                tr = tr.left if x[dim] < loc else tr.right
+                (dim,loc) = tree.elem.split() # dim: feature x, loc: split threshold
+                tree = tree.left if x[dim] < loc else tree.right
                 depth += 1
         
         # if tree.isLeaf(): 
@@ -349,7 +356,7 @@ class SuffStats:
         #     self.sum = None
         #     self.ss = None
 
-    def pred(self): # gives predictions
+    def pred(self): # gives predictions(mean)
         return self.sum / (self.n+self.eps) if self.__classify == False else argmax(self.counts)        
         
         # if self.__classify:
@@ -362,6 +369,7 @@ class SuffStats:
         if self.__classify == False: # if regression
             prd = self.pred()
             return ( self.ss/n - prd**2 )**(1/2) # sd of node
+            
         else: # if classification
             return sum(list(map(lambda x: -x/n * log2(x/n + self.eps), self.counts))) # entropy
 
@@ -378,14 +386,16 @@ class Test:
         self.statsR = SuffStats(numClasses=numClasses)
         self.dim = dim
         self.loc = loc
+        
 
     def update(self,x,y):
         if x[self.dim] < self.loc:
             self.statsL.update(y) 
+            
         else:
             self.statsR.update(y)
 
-class Elem: #HERE
+class Elem: # node elements
     def __init__(self,param,splitDim=-1,splitLoc=0,numSamplesSeen=0):
         self.xrng = param['xrng']
         self.xdim = len(param['xrng']) # number of features in x
@@ -393,9 +403,15 @@ class Elem: #HERE
         self.numTests = param['numTests'] if 'numTests' in param.keys() else 10
         self.splitDim = splitDim
         self.splitLoc = splitLoc
-        # self.numSamplesSeen = numSamplesSeen
+        self.numSamplesSeen = numSamplesSeen
         self.stats = SuffStats(self.numClasses)
         self.tests = [ self.generateTest() for _ in range(self.numTests) ]
+        # self.xrngL = param['xrng']
+        # self.xrngR = param['xrng']
+        # self.xrngL = [[0,0]] * len(param['xrng'])
+        # self.xrngR = [[0,0]] * len(param['xrng'])
+        self.numUpdateL = 0
+        self.numUpdateR = 0
 
     def reset(self):
         self.stats = None #self.stats.reset()
@@ -403,7 +419,10 @@ class Elem: #HERE
 
     def generateTest(self):
         dim = random.randrange(self.xdim) # pick a random feature among x
-        loc = random.uniform(self.xrng[dim][0],self.xrng[dim][1]) # pick a random value between x_min, x_max
+        if str(self.xrng[dim][0])[::-1] == 1 and str(self.xrng[dim][1])[::-1] == 1: # if the dimension is categorical
+            loc = random.randint(self.xrng[dim][0], self.xrng[dim][1]) # choose an integer between x_min, x_max
+        else:
+            loc = random.uniform(self.xrng[dim][0],self.xrng[dim][1]) # otherwise pick a random real value between x_min, x_max
         return Test(dim, loc, self.numClasses)
 
     def toString(self):
@@ -414,9 +433,30 @@ class Elem: #HERE
     
     def update(self,x,y):
         self.stats.update(y)
-        # self.numSamplesSeen += 1
+        self.numSamplesSeen += 1
+        
         for test in self.tests:
-            test.update(x,y)
+            if x[test.dim] < test.loc:
+                test.statsL.update(y)
+                self.numUpdateL += 1
+                if self.numUpdateL == 1:
+                    self.xrngL = [[x[i], x[i]] for i in range(len(x))] # initial xrng for L child node
+                for i in range(len(x)):
+                    if x[i] < min(self.xrngL[i]):
+                        self.xrngL[i][0] = x[i]
+                    if x[i] > max(self.xrngL[i]):
+                        self.xrngL[i][1] = x[i]
+            else:
+                test.statsR.update(y)
+                self.numUpdateR += 1
+                if self.numUpdateR == 1:
+                    self.xrngR = [[x[i], x[i]] for i in range(len(x))] # initial xrng for R child node
+                for i in range(len(x)):
+                    if x[i] < min(self.xrngR[i]):
+                        self.xrngR[i][0] = x[i]
+                    if x[i] > max(self.xrngR[i]):
+                        self.xrngR[i][1] = x[i]
+            # test.update(x,y)
 
     def updateSplit(self,dim,loc):
         self.splitDim, self.splitLoc = dim, loc
@@ -460,7 +500,7 @@ class ORF:
         self.numTrees = numTrees
         self.forest = [ORT(param) for _ in range(numTrees)]
         self.ncores = 4
-        self.gamma = 0.05
+        self.gamma = param['gamma'] if 'gamma' in param.keys() else 0.05
         # self.idx = []
         self.best_tree = 0
         # self.a_idx = []
@@ -507,8 +547,10 @@ class ORF:
             for i in didx:
                 self.forest[i] = ORT(self.param) # discard the tree and construct a new tree
 
-                
+    #def pred_func(self, x, i):
+    #    return self.forest[i].predict(x)            
 
+    
     def predict(self,x):
         """
         returns prediction (a scalar) of ORF based on input (x) which is a list of input variables
@@ -520,6 +562,7 @@ class ORF:
         """
         preds = [tree.predict(x) for tree in self.forest]
         
+
         if self.classify == 0: # if regression
             return sum(preds) / (len(preds)*1.0)
         
