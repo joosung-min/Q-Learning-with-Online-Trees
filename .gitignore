@@ -12,3 +12,4 @@ core.12444
 .python-version
 /Blackjack/__pycache__
 /Blackjack/slurm*
+/CartPole/*.p

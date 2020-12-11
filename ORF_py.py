@@ -249,7 +249,7 @@ class ORT: # Tree object
             #     self.error.append(y != self.predict(x)) # measure misclassification
             
             # self.OOBError = mean(self.error)
-            self.OOBError = abs(y - self.predict(x)) / (y+0.0001)
+            self.OOBError = abs((y - self.predict(x)) / (y+0.0001))
             
                 
         else:
