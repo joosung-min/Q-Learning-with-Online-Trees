@@ -12,9 +12,9 @@ import time
 import datetime
 
 
-import ORF_py_cython as ORF
+#import ORF_py_cython as ORF
 # import ORF_py as ORF
-
+import ORF_py_2 as ORF
 
 class ORF_DQN: 
     
@@ -152,7 +152,7 @@ ORFparams = {'minSamples': replay_size*5, 'minGain': 0.1, 'xrng': None, 'maxDept
 # lunar noMR 3: memory=5000, minSamples replay_size*5, minGain=0.1, maxDepth=70, epsilon_decay=0.99
 # lunar MR 1: memory = 5000, minSamples = replay_size*10, minGain=0.1, maxDepth = 50
 
-backup_file_name = "lunar_MR" + "_1"
+backup_file_name = "lunar_MR" + "_2"
 
 dqn = ORF_DQN(n_state, n_action, replay_size, ORFparams) 
 
