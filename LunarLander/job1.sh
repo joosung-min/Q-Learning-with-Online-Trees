@@ -8,6 +8,6 @@
 
 module load python/3.8
 source ~/torch/bin/activate
-python setup_ORF.py build_ext --inplace
+#python setup_ORF.py build_ext --inplace
 python "orf_lunar.py"
 
