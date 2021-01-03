@@ -14,3 +14,4 @@ core.12444
 /Blackjack/slurm*
 /CartPole/*.p
 /CartPole/*_mod.sav
+/CartPole/mods
