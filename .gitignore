@@ -5,13 +5,7 @@ MultivariateRandomForest.py
 test.ipynb
 ORFtest.ipynb
 core.12444
-/LunarLander/__pycache__
-/LunarLander/slurm*
-/MountainCar/__pycache__
-/MountainCar/slurm*
 .python-version
-/Blackjack/__pycache__
-/Blackjack/slurm*
-/CartPole/*.p
-/CartPole/*_mod.sav
-/CartPole/mods
+*.p
+*_mod.sav
+slurm*
