@@ -9,3 +9,4 @@ core.12444
 *.p
 *_mod.sav
 slurm*
+core*
