@@ -1,12 +1,10 @@
 Random Forest
-ORF_CartPole copy.ipynb
 __pycache__
-MultivariateRandomForest.py
-test.ipynb
-ORFtest.ipynb
-core.12444
+*test.*
 .python-version
 *.p
 *_mod.sav
 slurm*
 core*
+.vscode
+.ipynb_checkpoints
