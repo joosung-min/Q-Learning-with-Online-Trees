@@ -176,7 +176,7 @@ class ORT: # Tree object
     - numClasses       : see above (default: 0, for regression)
     - numTests         : Number of potential split location and dimension pairs to test (defaul: 10)
     - maxDepth         : Maximum depth a tree is allowed to have. A tree stops growing branches that have depth = maxDepth (default: 30. NOTE THAT YOUR TREE WILL NOT GROW BEYOND 30 DEEP, SET maxDepth TO BE A VALUE GREATER THAN 30 IF YOU WANT LARGER TREES!!!)
-    - gamma            : Trees that are of age 1/gamma may be discarded. see paper (default: 0, for no discarding of old trees). Currently not implemented.
+    - phi            : Trees that are of age 1/phi may be discarded. see paper (default: 0, for no discarding of old trees). Currently not implemented.
 
 
     Examples:
@@ -190,7 +190,7 @@ class ORT: # Tree object
         self.minSamples = param['minSamples']
         self.minGain = param['minGain']
         self.xrng = param['xrng']
-        self.gamma = param['gamma'] if 'gamma' in param.keys() else 0.05
+        self.phi = param['phi'] if 'phi' in param.keys() else 0.05
         self.numTests = param['numTests'] if 'numTests' in param.keys() else 10
         self.numClasses = param['numClasses'] if 'numClasses' in param.keys() else 0
         self.maxDepth = param['maxDepth'] if 'maxDepth' in param.keys() else 30 # This needs to be implemented to restrain the maxDepth of the tree. FIXME
@@ -515,7 +515,7 @@ class ORF:
             - numClasses : see above (default: 0, for regression)
             - numTests   : Number of potential split location and dimension pairs to test (defaul: 10)
             - maxDepth   : Maximum depth a tree is allowed to have. A tree stops growing branches that have depth = maxDepth (default: 30. NOTE THAT YOUR TREE WILL NOT GROW BEYOND 30 DEEP, SET maxDepth TO BE A VALUE GREATER THAN 30 IF YOU WANT LARGER TREES!!!)
-            - gamma      : Trees that are of age 1/gamma may be discarded. 
+            - phi      : Trees that are of age 1/phi may be discarded. 
 
         Two parameters are optional: 
         - numTrees       : number of trees in forest (default: 100)
@@ -530,7 +530,7 @@ class ORF:
         self.numTrees = numTrees
         self.forest = [ORT(param) for _ in range(numTrees)]
         self.ncores = 4
-        self.gamma = param['gamma'] if 'gamma' in param.keys() else 0.05
+        self.phi = param['phi'] if 'phi' in param.keys() else 0.05
         self.best_tree = 0
         self.discard_n = 0
         self.tkw_n = 0
@@ -554,7 +554,7 @@ class ORF:
         
         # Temporal knowledge weighting:
         
-        idx = [i for i, tree in enumerate(self.forest) if tree.age > 1/self.gamma] # idx of trees with age > 1/gamma
+        idx = [i for i, tree in enumerate(self.forest) if tree.age > 1/self.phi] # idx of trees with age > 1/phi
         if len(idx) >= 1:
             self.tkw_n += 1
             randomIdx = random.sample(idx, k=1)[0]
@@ -569,7 +569,7 @@ class ORF:
         # d = 1 # number of trees to assess
 
         # if len(idx) > d:
-        #     randomIdx = random.sample(idx, k=d) # randomly choose trees older than 1/gamma
+        #     randomIdx = random.sample(idx, k=d) # randomly choose trees older than 1/phi
         #     OOBErrors = [self.forest[i].OOBError for i in randomIdx]
         #     tot_OOBErrors = [self.forest[j].OOBError for j in range(len(self.forest))]
         #     self.best_tree = self.forest[argmin(tot_OOBErrors)]

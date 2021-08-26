@@ -123,7 +123,7 @@ if __name__ == "__main__":
     # env_xrng = [[1,32], [1, 11], [0, 1]] # for blackjack
     env_xrng = [[-4.8, 4.8],[-1.0, 1.0],[-0.418, 0.418],[-1.0, 1.0]] # for CartPole
     # env_xrng = [[-1.1, 1.1],[-1.1, 1.1],[-1.5, 1.5],[-1.5, 1.5],[-2.1, 2.1],[-3.1, 3.1],[0,1], [0,1]] # for LunarLander
-    ORFparams = {'minSamples': 256, 'minGain': 0.05, 'xrng': env_xrng, 'maxDepth': 40, 'numTrees': 100, 'maxTrees': 200, "numTests":len(env_xrng), "gamma":1/1000} 
+    ORFparams = {'minSamples': 256, 'minGain': 0.05, 'xrng': env_xrng, 'maxDepth': 40, 'numTrees': 100, 'maxTrees': 200, "numTests":len(env_xrng), "phi":1/1000} 
     QLparams = {'gamma' : 1.0, 'epsilon' : 0.5, 'epsilon_decay' : 0.99}
      
     # jobid = os.getenv('SLURM_ARRAY_TASK_ID')
