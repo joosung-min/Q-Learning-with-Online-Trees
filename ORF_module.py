@@ -1,14 +1,11 @@
-# **Changes**
-# 
-# * 2020-08-17:
-#     * Added temporal knowledge weighting in ORF class
-# 
-# * 2020-08-16: 
-#     * Replaced map(lambda x: ...) with list(map(lambda x: ...))
-#     * Replaced 'xrange' with 'range'
-#     * Replaced '.has_key()' with 'if _ in .keys()'
-# * 2020-12-01
-#     * Added xrgL and xrgR so that each of the children node receives its own xrng to create tests.
+# Q-learning with online trees - Joosung Min, Lloyd T. Elliott (2021)
+#
+#  * This paper utilizes online random forests as Q-function approximator for Q-learning.
+#  * Construction of online random forests follows code by Arthur Lui (https://github.com/luiarthur/ORFpy) which is based on the paper Online Random Forests by Saffari et. al. (2009) 
+#   - Added features to the original code:
+#     > (Attempts for) parallelization.
+#     > temporal knowledge weighing.
+#     > OOBE computation for regression.
 
 import sys
 import random
@@ -219,7 +216,7 @@ class ORT: # Tree object
 
     def update(self,x,y):
         """
-        updates the ORT
+        updates ORT
 
         - x : list of k covariates (k x 1)
         - y : response (scalar)
@@ -250,7 +247,7 @@ class ORT: # Tree object
                 self.age += 1
                 (j,depth) = self.__findLeaf(x,self.tree) # find location of node j to update
                 j.elem.update(x,y)
-                if j.elem.numSamplesSeen > self.minSamples and depth < self.maxDepth: # FIXME: which is the correct approach?
+                if j.elem.numSamplesSeen > self.minSamples and depth < self.maxDepth: 
                 # if j.elem.stats.n > self.minSamples and depth < self.maxDepth:
                     self.g = self.__gains(j.elem)
                     # print("this is g : ", g)
@@ -498,7 +495,8 @@ class Elem: # node elements
 class ORF:
     def __init__(self,param,numTrees=100,ncores=0, discard_freq = 1000):
         """
-        Constructor for Online Random Forest. For more info: >>> help(ORT)
+        # online random forest construction: original source code from https://github.com/luiarthur/ORFpy (Arthur Lui)
+        Constructor for Online Random Forest. 
 
         One variable (param) is required to construct an ORF:
         - param          : same as that in ORT. see >>> help(ORT)

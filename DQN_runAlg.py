@@ -1,4 +1,5 @@
-#%%
+## Codes for Deep Q-learning follows instructions on 'PyTorch 1.x Reinforcement Learning Cookbook' by Y. Liu (2019)
+
 import gym
 import torch
 from torch.autograd import Variable

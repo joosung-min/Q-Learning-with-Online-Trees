@@ -1,4 +1,12 @@
-#%%
+# Q-learning with online trees - Joosung Min, Lloyd T. Elliott (2021)
+#
+#  * This paper utilizes online random forests as Q-function approximator for Q-learning.
+#  * Construction of online random forests follows code by Arthur Lui (https://github.com/luiarthur/ORFpy) which is based on the paper Online Random Forests by Saffari et. al. (2009) 
+#   - Added features to the original code:
+#     > (Attempts for) parallelization.
+#     > temporal knowledge weighing.
+#     > OOBE computation for regression.
+
 import gym
 from gym import wrappers
 import random
@@ -162,6 +170,3 @@ if __name__ == "__main__":
     pickle.dump(myEnv, open("./" + envName + "/" + env_file,"wb"))
     print(myEnv['total_rewards'])
     
-#%%
-
-# %%
