@@ -12,6 +12,6 @@ Codes:
 
 * DQN_runAlg.py: contains codes for deep Q-learning.
 
-* ORF_module.py: contains necessary classes and functions for online random forests.
+* utils.py, ORF_module.py: contains necessary classes and functions for online random forests.
 
 * ORF_runAlg.py: performs Q-learning using online random forests as Q-function approximators.
