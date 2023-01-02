@@ -1,6 +1,6 @@
 # Q-learning wiht Online Trees (2021)
 
-Codes for Q-learning with Online Trees (Joosung Min, Lloyd T. Elliott (2021)). https://arxiv.org/abs/2204.03771
+Codes for [Q-learning with Online Trees (Joosung Min, Lloyd T. Elliott (2021)).](https://arxiv.org/abs/2204.03771)
 
 Simulations are based on OpenAI's gym envirionments:
 
