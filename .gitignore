@@ -9,3 +9,4 @@ core*
 .ipynb_checkpoints
 *local
 _forThesis
+dump
