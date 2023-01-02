@@ -4,7 +4,11 @@ Authors: Joosung Min, Lloyd T. Elliott
 
 Paper: https://arxiv.org/abs/2204.03771
 
-Simulations are based on OpenAI's gym envirionment.
+Simulations are based on OpenAI's gym envirionments:
+
+* Blackjack-v0, CartPole-v1, LunarLander-v2
+
+Codes: 
 
 * DQN_runAlg.py: contains codes for deep Q-learning.
 
