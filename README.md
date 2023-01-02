@@ -1,4 +1,4 @@
-# Q-learning wiht Online Trees (2021)
+# Q-learning with Online Trees (2021)
 
 Codes for [Q-learning with Online Trees (Joosung Min, Lloyd T. Elliott (2021)).](https://arxiv.org/abs/2204.03771)
 
